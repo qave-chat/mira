@@ -8,3 +8,7 @@ import { SingleRunnerLive } from "./cluster.impl";
 export const WorkflowEngineLive = ClusterWorkflowEngine.layer.pipe(
   Layer.provideMerge(SingleRunnerLive),
 );
+
+export const WorkflowEngineOnlyLive = ClusterWorkflowEngine.layer.pipe(
+  Layer.provide(SingleRunnerLive),
+);

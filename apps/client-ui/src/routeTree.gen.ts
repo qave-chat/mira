@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './app.route'
 import { Route as moduleSessionSessionDotrouteRouteImport } from './module/session/session.route'
 import { Route as moduleAuthAuthDotrouteRouteImport } from './module/auth/auth.route'
 import { Route as moduleHomeHomeDotrouteRouteImport } from './module/home/home.route'
+import { Route as moduleShareShareDetailDotrouteRouteImport } from './module/share/share-detail.route'
 import { Route as moduleSessionSessionDetailDotrouteRouteImport } from './module/session/session-detail.route'
 
 const moduleSessionSessionDotrouteRoute =
@@ -30,6 +31,12 @@ const moduleHomeHomeDotrouteRoute = moduleHomeHomeDotrouteRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const moduleShareShareDetailDotrouteRoute =
+  moduleShareShareDetailDotrouteRouteImport.update({
+    id: '/share/$shareId',
+    path: '/share/$shareId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const moduleSessionSessionDetailDotrouteRoute =
   moduleSessionSessionDetailDotrouteRouteImport.update({
     id: '/sessions/$sessionId',
@@ -42,12 +49,14 @@ export interface FileRoutesByFullPath {
   '/login': typeof moduleAuthAuthDotrouteRoute
   '/sessions': typeof moduleSessionSessionDotrouteRoute
   '/sessions/$sessionId': typeof moduleSessionSessionDetailDotrouteRoute
+  '/share/$shareId': typeof moduleShareShareDetailDotrouteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof moduleHomeHomeDotrouteRoute
   '/login': typeof moduleAuthAuthDotrouteRoute
   '/sessions': typeof moduleSessionSessionDotrouteRoute
   '/sessions/$sessionId': typeof moduleSessionSessionDetailDotrouteRoute
+  '/share/$shareId': typeof moduleShareShareDetailDotrouteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -55,13 +64,25 @@ export interface FileRoutesById {
   '/login': typeof moduleAuthAuthDotrouteRoute
   '/sessions': typeof moduleSessionSessionDotrouteRoute
   '/sessions/$sessionId': typeof moduleSessionSessionDetailDotrouteRoute
+  '/share/$shareId': typeof moduleShareShareDetailDotrouteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/sessions' | '/sessions/$sessionId'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/sessions'
+    | '/sessions/$sessionId'
+    | '/share/$shareId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/sessions' | '/sessions/$sessionId'
-  id: '__root__' | '/' | '/login' | '/sessions' | '/sessions/$sessionId'
+  to: '/' | '/login' | '/sessions' | '/sessions/$sessionId' | '/share/$shareId'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/sessions'
+    | '/sessions/$sessionId'
+    | '/share/$shareId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -69,6 +90,7 @@ export interface RootRouteChildren {
   moduleAuthAuthDotrouteRoute: typeof moduleAuthAuthDotrouteRoute
   moduleSessionSessionDotrouteRoute: typeof moduleSessionSessionDotrouteRoute
   moduleSessionSessionDetailDotrouteRoute: typeof moduleSessionSessionDetailDotrouteRoute
+  moduleShareShareDetailDotrouteRoute: typeof moduleShareShareDetailDotrouteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -94,6 +116,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof moduleHomeHomeDotrouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/share/$shareId': {
+      id: '/share/$shareId'
+      path: '/share/$shareId'
+      fullPath: '/share/$shareId'
+      preLoaderRoute: typeof moduleShareShareDetailDotrouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sessions/$sessionId': {
       id: '/sessions/$sessionId'
       path: '/sessions/$sessionId'
@@ -110,6 +139,7 @@ const rootRouteChildren: RootRouteChildren = {
   moduleSessionSessionDotrouteRoute: moduleSessionSessionDotrouteRoute,
   moduleSessionSessionDetailDotrouteRoute:
     moduleSessionSessionDetailDotrouteRoute,
+  moduleShareShareDetailDotrouteRoute: moduleShareShareDetailDotrouteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

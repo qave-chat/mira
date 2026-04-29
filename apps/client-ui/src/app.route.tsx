@@ -35,8 +35,9 @@ async function fetchSession(): Promise<{ user: SessionUser } | null> {
 export const Route = createRootRoute({
   beforeLoad: async ({ location }) => {
     const isLogin = location.pathname === "/login";
+    const isPublicShare = location.pathname.startsWith("/share/");
     const session = await fetchSession();
-    if (!session && !isLogin) {
+    if (!session && !isLogin && !isPublicShare) {
       // oxlint-disable-next-line effect-local/no-throw -- TanStack Router: redirect is raised via throw
       throw redirect({ to: "/login", search: () => ({}) });
     }
@@ -52,9 +53,12 @@ export const Route = createRootRoute({
 function RootLayout() {
   const matches = useMatches();
   const isLogin = matches.some((m) => m.routeId === "/login");
+  const isPublicShare = matches.some((m) => m.routeId.startsWith("/share/"));
   return (
     <ThemeProvider>
-      <TooltipProvider>{isLogin ? <Outlet /> : <AuthenticatedLayout />}</TooltipProvider>
+      <TooltipProvider>
+        {isLogin || isPublicShare ? <Outlet /> : <AuthenticatedLayout />}
+      </TooltipProvider>
     </ThemeProvider>
   );
 }

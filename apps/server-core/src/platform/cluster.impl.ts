@@ -1,7 +1,7 @@
 import { Config, Effect, Layer, Redacted } from "effect";
-import { SqlClient } from "effect/unstable/sql";
 import { SingleRunner } from "effect/unstable/cluster";
 import { PgClient } from "@effect/sql-pg";
+import postgres from "postgres";
 import { DbPgSsl, DbUrl } from "./db.config";
 
 const PLATFORM_SCHEMA = "platform";
@@ -15,13 +15,22 @@ const platformUrl = DbUrl.pipe(
   }),
 );
 
-const PlatformPgClientLive = Layer.effectDiscard(
+const PlatformSchemaLive = Layer.effectDiscard(
   Effect.gen(function* () {
-    const sql = yield* SqlClient.SqlClient;
-    yield* sql`CREATE SCHEMA IF NOT EXISTS ${sql(PLATFORM_SCHEMA)}`;
+    const url = yield* DbUrl;
+    const ssl = yield* DbPgSsl;
+    yield* Effect.tryPromise({
+      try: async () => {
+        const sql = postgres(Redacted.value(url), { max: 1, ssl: ssl ? "require" : false });
+        await sql.unsafe(`CREATE SCHEMA IF NOT EXISTS ${PLATFORM_SCHEMA}`);
+        await sql.end();
+      },
+      catch: (cause) => cause,
+    });
   }),
-).pipe(Layer.provideMerge(PgClient.layerConfig({ url: platformUrl, ssl: DbPgSsl })));
+);
 
 export const SingleRunnerLive = SingleRunner.layer({ runnerStorage: "sql" }).pipe(
-  Layer.provide(PlatformPgClientLive),
+  Layer.provide(PgClient.layerConfig({ url: platformUrl, ssl: DbPgSsl })),
+  Layer.provideMerge(PlatformSchemaLive),
 );

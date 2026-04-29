@@ -7,7 +7,14 @@ const meta: Meta<typeof SessionDetail> = {
   component: SessionDetail,
   args: {
     sessionId: "session-1042",
+    sourceUrl: "https://example.com/video.mp4",
+    generatedVideoUrl: undefined,
+    isGenerating: false,
+    isSharing: false,
+    error: null,
+    onSourceUrlChange: () => {},
     onGenerateVideo: () => {},
+    onShare: () => {},
   },
   decorators: [
     (Story) => (
@@ -23,3 +30,9 @@ export default meta;
 type Story = StoryObj<typeof SessionDetail>;
 
 export const Default: Story = {};
+
+export const ReadyToShare: Story = {
+  args: {
+    generatedVideoUrl: "https://example.com/video.mp4",
+  },
+};

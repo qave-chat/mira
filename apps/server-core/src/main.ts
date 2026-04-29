@@ -3,14 +3,28 @@ import { RpcSerialization } from "effect/unstable/rpc";
 import { BunHttpServer, BunRuntime } from "@effect/platform-bun";
 import { HttpRouter } from "effect/unstable/http";
 import { HealthLive } from "./module/health/health.rpc.impl";
+import { VideoGenerateLive } from "./module/video-generate/video-generate.rpc.impl";
+import { VideoGenerateRendererLive } from "./module/video-generate/video-generate.renderer";
+import { VideoGenerateServiceLive } from "./module/video-generate/video-generate.service";
+import { VideoGenerateWorkflowLive } from "./module/video-generate/video-generate.workflow";
 import { AuthCatchallLive } from "./platform/auth/auth.catchall";
 import { AuthLive } from "./platform/auth/auth.impl";
 import { DbLive } from "./platform/db.impl";
 import { HttpApiLive } from "./platform/http.impl";
+import { R2Live } from "./platform/r2.impl";
 import { RpcLive } from "./platform/rpc.impl";
+import { PgClientLive } from "./platform/sql.impl";
 import { StaticLive } from "./platform/static.impl";
+import { WorkflowEngineOnlyLive } from "./platform/workflow.impl";
 
-const Handlers = HealthLive;
+const VideoGenerateLayers = Layer.mergeAll(VideoGenerateLive, VideoGenerateWorkflowLive).pipe(
+  Layer.provide(VideoGenerateServiceLive),
+  Layer.provide(VideoGenerateRendererLive),
+  Layer.provide(R2Live),
+  Layer.provide(WorkflowEngineOnlyLive),
+);
+
+const Handlers = Layer.mergeAll(HealthLive, VideoGenerateLayers);
 
 const AuthRoutes = AuthCatchallLive.pipe(Layer.provide(AuthLive), Layer.provide(DbLive));
 
@@ -49,5 +63,9 @@ BunRuntime.runMain(
     const port = yield* PortConfig;
     yield* Effect.log(`Server listening on http://0.0.0.0:${port}`);
     yield* Layer.launch(ServerLive);
-  }).pipe(Effect.provide(LoggerLive)),
+  }).pipe(Effect.provide(PgClientLive), Effect.provide(LoggerLive)) as Effect.Effect<
+    void,
+    unknown,
+    never
+  >,
 );
