@@ -15,6 +15,13 @@
       "when": 1777422320835,
       "tag": "0001_add_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777428223594,
+      "tag": "0002_hot_arachne",
+      "breakpoints": true
     }
   ]
 }

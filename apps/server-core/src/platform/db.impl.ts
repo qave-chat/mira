@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import postgres from "postgres";
 import { drizzle as drizzlePg } from "drizzle-orm/postgres-js";
 import { migrate as migratePg } from "drizzle-orm/postgres-js/migrator";
+import { plans } from "../module/plans/plans.table";
 import { sessions } from "../module/sessions/sessions.table";
 import { account, session, user, verification } from "./auth/auth.table";
 import { Db, ErrorDb, type DbService } from "./db.contract";
@@ -16,6 +17,7 @@ const schema = {
   account,
   verification,
   sessions,
+  plans,
 };
 
 const migrationsFolder = path.resolve(

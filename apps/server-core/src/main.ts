@@ -3,6 +3,11 @@ import { RpcSerialization } from "effect/unstable/rpc";
 import { BunHttpServer, BunRuntime } from "@effect/platform-bun";
 import { HttpRouter } from "effect/unstable/http";
 import { HealthLive } from "./module/health/health.rpc.impl";
+import { PlansRepoLive } from "./module/plans/plans.repo";
+import { PlansLive } from "./module/plans/plans.rpc.impl";
+import { PlansServiceLive } from "./module/plans/plans.service";
+import { SessionsRepoLive } from "./module/sessions/sessions.repo";
+import { SessionsServiceLive } from "./module/sessions/sessions.service";
 import { VideoGenerateLive } from "./module/video-generate/video-generate.rpc.impl";
 import { VideoGenerateRendererLive } from "./module/video-generate/video-generate.renderer";
 import { VideoGenerateServiceLive } from "./module/video-generate/video-generate.service";
@@ -24,7 +29,15 @@ const VideoGenerateLayers = Layer.mergeAll(VideoGenerateLive, VideoGenerateWorkf
   Layer.provide(WorkflowEngineOnlyLive),
 );
 
-const Handlers = Layer.mergeAll(HealthLive, VideoGenerateLayers);
+const PlansLayers = PlansLive.pipe(
+  Layer.provide(PlansServiceLive),
+  Layer.provide(PlansRepoLive),
+  Layer.provide(SessionsServiceLive),
+  Layer.provide(SessionsRepoLive),
+  Layer.provide(DbLive),
+);
+
+const Handlers = Layer.mergeAll(HealthLive, VideoGenerateLayers, PlansLayers);
 
 const AuthRoutes = AuthCatchallLive.pipe(Layer.provide(AuthLive), Layer.provide(DbLive));
 
