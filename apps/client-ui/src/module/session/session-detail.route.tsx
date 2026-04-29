@@ -1,10 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  ModuleLayout,
-  ModuleLayoutBody,
-  ModuleLayoutHeader,
-  ModuleLayoutTitle,
-} from "@/shared/ui/module-layout.ui";
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/shared/ui/breadcrumb.ui";
+import { SessionDetail } from "@/module/session/ui/session-detail.ui";
+import { ModuleLayout, ModuleLayoutBody, ModuleLayoutHeader } from "@/shared/ui/module-layout.ui";
 
 export const Route = createFileRoute("/sessions/$sessionId")({
   component: SessionDetailRoute,
@@ -16,15 +20,20 @@ function SessionDetailRoute() {
   return (
     <ModuleLayout>
       <ModuleLayoutHeader>
-        <ModuleLayoutTitle>Session</ModuleLayoutTitle>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink render={<Link to="/sessions" />}>Sessions</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{sessionId}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
       </ModuleLayoutHeader>
       <ModuleLayoutBody>
-        <section className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
-          <h2 className="text-lg font-semibold">Session {sessionId}</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Details for this session will appear here once the module is wired to data.
-          </p>
-        </section>
+        <SessionDetail sessionId={sessionId} onGenerateVideo={() => {}} />
       </ModuleLayoutBody>
     </ModuleLayout>
   );
