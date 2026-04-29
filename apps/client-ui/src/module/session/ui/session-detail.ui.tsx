@@ -290,6 +290,7 @@ export function SessionDetail({
   const cancelledEditNodeIdsRef = useRef(new Set<string>());
   const plansRef = useRef(plans);
   const attachmentsRef = useRef(attachments);
+  const optimisticPlansRef = useRef<ReadonlyArray<GeneratedPlan> | null>(null);
   const isNodeEditingRef = useRef(false);
   const undoHistoryRef = useRef<PlanHistoryEntry[]>([]);
   const redoHistoryRef = useRef<PlanHistoryEntry[]>([]);
@@ -300,6 +301,19 @@ export function SessionDetail({
   const canGeneratePlan = displayedPrompt.trim().length > 0 || attachments.length > 0;
 
   useEffect(() => {
+    if (optimisticPlansRef.current) {
+      if (planSnapshotsMatch(plans, createPlanSnapshot(optimisticPlansRef.current))) {
+        optimisticPlansRef.current = null;
+        plansRef.current = plans;
+        renderPlans(plans, attachments);
+        return;
+      }
+
+      plansRef.current = mergePlansById(plans, optimisticPlansRef.current);
+      renderPlans(plansRef.current, attachments);
+      return;
+    }
+
     plansRef.current = plans;
     if (plans.length > 0) {
       renderPlans(plans, attachments);
@@ -554,6 +568,7 @@ export function SessionDetail({
 
     const nextPlans = mergePlanSnapshot(plansRef.current, snapshot);
     plansRef.current = nextPlans;
+    optimisticPlansRef.current = nextPlans;
     renderPlans(nextPlans, attachmentsRef.current);
     setPlanPersistError(null);
     void persistPlanSnapshot(snapshot).catch((error: unknown) => {
@@ -606,6 +621,7 @@ export function SessionDetail({
     const after = createPlanSnapshot(updatedPlans);
     pushPlanHistory(before, after);
     plansRef.current = updatedPlans;
+    optimisticPlansRef.current = updatedPlans;
     setPlanPersistError(null);
     for (const [planId, deletedStepIndexes] of deletedStepIndexesByPlanId) {
       const deletedPlan = plans.find((item) => item.id === planId);
@@ -656,6 +672,7 @@ export function SessionDetail({
 
     pushPlanHistory(createPlanSnapshot(currentPlans), createPlanSnapshot(updatedPlans));
     plansRef.current = updatedPlans;
+    optimisticPlansRef.current = updatedPlans;
     renderPlans(updatedPlans, attachmentsRef.current);
     setPlanPersistError(null);
     void onPlanUpdated({
@@ -704,6 +721,7 @@ export function SessionDetail({
 
     pushPlanHistory(createPlanSnapshot(currentPlans), createPlanSnapshot(updatedPlans));
     plansRef.current = updatedPlans;
+    optimisticPlansRef.current = updatedPlans;
     setPlanPersistError(null);
     void onPlanUpdated({
       id: updatedPlan.id,
@@ -1355,6 +1373,40 @@ function mergePlanSnapshot(
   return plans.map((plan) => {
     const snapshotPlan = snapshotById.get(plan.id);
     return snapshotPlan ? { ...plan, ...snapshotPlan } : plan;
+  });
+}
+
+function mergePlansById(
+  plans: ReadonlyArray<GeneratedPlan>,
+  overrides: ReadonlyArray<GeneratedPlan>,
+): ReadonlyArray<GeneratedPlan> {
+  const overrideById = new Map(overrides.map((plan) => [plan.id, plan]));
+  return plans.map((plan) => overrideById.get(plan.id) ?? plan);
+}
+
+function planSnapshotsMatch(plans: ReadonlyArray<GeneratedPlan>, snapshot: PlanHistorySnapshot) {
+  const plansById = new Map(plans.map((plan) => [plan.id, plan]));
+  return snapshot.every((snapshotPlan) => {
+    const plan = plansById.get(snapshotPlan.id);
+    return Boolean(
+      plan &&
+      plan.exploration.length === snapshotPlan.exploration.length &&
+      plan.links.length === snapshotPlan.links.length &&
+      plan.exploration.every((item, index) => {
+        const snapshotItem = snapshotPlan.exploration[index];
+        return (
+          snapshotItem &&
+          item.reason === snapshotItem.reason &&
+          item.screenshot === snapshotItem.screenshot &&
+          item.position?.x === snapshotItem.position?.x &&
+          item.position?.y === snapshotItem.position?.y
+        );
+      }) &&
+      plan.links.every((link, index) => {
+        const snapshotLink = snapshotPlan.links[index];
+        return snapshotLink && link.from === snapshotLink.from && link.to === snapshotLink.to;
+      }),
+    );
   });
 }
 
