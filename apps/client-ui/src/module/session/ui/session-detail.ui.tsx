@@ -3,12 +3,14 @@ import {
   BackgroundVariant,
   Controls,
   type Edge,
+  Handle,
   MiniMap,
   type Node,
   type NodeProps,
   type ReactFlowInstance,
   ReactFlow,
   MarkerType,
+  Position,
   useEdgesState,
   useNodesState,
   useReactFlow,
@@ -49,9 +51,14 @@ type UploadImagesResponse = {
 type GeneratedPlan = {
   id: string;
   intent: string;
-  exploration: Array<{
+  exploration: ReadonlyArray<{
     screenshot: string;
+    screenshotUrl?: string;
     reason: string;
+  }>;
+  links: ReadonlyArray<{
+    from: string;
+    to: string;
   }>;
 };
 
@@ -75,6 +82,10 @@ type RealtimeTranscriptionEvent = {
 
 const OPENAI_REALTIME_MODEL = "gpt-4o-realtime-preview";
 const REALTIME_DRAFT_FLUSH_MS = 40;
+const PLAN_NODE_START_X = 120;
+const PLAN_NODE_START_Y = 120;
+const PLAN_NODE_GAP_X = 460;
+const PLAN_NODE_STAGGER_Y = 48;
 
 type WelcomeNodeData = {
   label: string;
@@ -98,6 +109,8 @@ function WelcomeNode({ id, data }: NodeProps<SessionNode>) {
 
   return (
     <div className="relative min-w-64 rounded-xl border border-neutral-300 bg-neutral-100 p-5 pr-12 text-neutral-950 shadow-xl shadow-black/15 ring-1 ring-black/5 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:shadow-black/35 dark:ring-white/5">
+      <Handle type="target" position={Position.Left} className="opacity-0" />
+      <Handle type="source" position={Position.Right} className="opacity-0" />
       <button
         type="button"
         aria-label="Delete welcome node"
@@ -167,11 +180,12 @@ type ContextMenuPosition = {
 };
 
 export type SessionDetailProps = {
+  plan?: GeneratedPlan;
   sessionId: string;
   onPlanCreated?: (planId: string) => void;
 };
 
-export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) {
+export function SessionDetail({ plan, sessionId, onPlanCreated }: SessionDetailProps) {
   const { resolvedTheme } = useTheme();
   const [nodes, setNodes, onNodesChange] = useNodesState<SessionNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
@@ -200,6 +214,12 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
     : workflowPrompt;
   const isUploadingImages = pendingUploads.length > 0;
   const canGeneratePlan = displayedPrompt.trim().length > 0 || attachments.length > 0;
+
+  useEffect(() => {
+    if (plan) {
+      renderPlan(plan, attachments);
+    }
+  }, [plan?.id]);
 
   useEffect(() => {
     return () => {
@@ -491,21 +511,34 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
       currentAttachments.map((attachment) => [attachment.key, attachment]),
     );
     const planNodes: SessionNode[] = plan.exploration.map((item, index) => ({
-      id: `plan-${plan.id}-${index}`,
+      id: `step-${index + 1}`,
       type: "placeholder",
-      position: { x: 120 + index * 360, y: 120 },
+      position: {
+        x: PLAN_NODE_START_X + index * PLAN_NODE_GAP_X,
+        y: PLAN_NODE_START_Y + (index % 2) * PLAN_NODE_STAGGER_Y,
+      },
       data: {
         label: `Step ${index + 1}`,
         reason: item.reason,
-        screenshotUrl: attachmentByKey.get(item.screenshot)?.url,
+        screenshotUrl: item.screenshotUrl ?? attachmentByKey.get(item.screenshot)?.url,
       },
     }));
-    const planEdges: Edge[] = planNodes.slice(1).map((node, index) => ({
-      id: `plan-${plan.id}-edge-${index}`,
-      source: planNodes[index]?.id ?? "",
-      target: node.id,
-      markerEnd: { type: MarkerType.ArrowClosed },
-    }));
+    const planNodeIds = new Set(planNodes.map((node) => node.id));
+    const links =
+      plan.links.length > 0 ? plan.links : createSequentialLinks(plan.exploration.length);
+    const planEdges: Edge[] = links.flatMap((link, index) =>
+      planNodeIds.has(link.from) && planNodeIds.has(link.to)
+        ? [
+            {
+              id: `plan-${plan.id}-edge-${index}`,
+              source: link.from,
+              target: link.to,
+              markerEnd: { type: MarkerType.ArrowClosed },
+              style: { stroke: "var(--foreground)", strokeWidth: 2 },
+            },
+          ]
+        : [],
+    );
     setNodes(planNodes);
     setEdges(planEdges);
   }
@@ -725,6 +758,13 @@ function appendTranscript(current: string, transcript: string) {
 
 function getImageFiles(files: Iterable<File>) {
   return Array.from(files).filter((file) => file.type.startsWith("image/"));
+}
+
+function createSequentialLinks(count: number) {
+  return Array.from({ length: Math.max(0, count - 1) }, (_, index) => ({
+    from: `step-${index + 1}`,
+    to: `step-${index + 2}`,
+  }));
 }
 
 async function readUploadError(response: Response) {

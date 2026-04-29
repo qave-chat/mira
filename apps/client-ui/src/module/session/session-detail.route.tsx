@@ -196,7 +196,11 @@ function SessionDetailRoute() {
         </ModuleLayoutActions>
       </ModuleLayoutHeader>
       <div className="min-h-0 w-full flex-1">
-        <SessionDetail sessionId={sessionId} onPlanCreated={handlePlanCreated} />
+        <SessionDetail
+          plan={selectedPlan}
+          sessionId={sessionId}
+          onPlanCreated={handlePlanCreated}
+        />
       </div>
     </ModuleLayout>
   );

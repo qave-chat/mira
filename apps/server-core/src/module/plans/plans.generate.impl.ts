@@ -143,12 +143,14 @@ export const PlansGenerateLive = HttpRouter.use((router) =>
           } satisfies GeneratedPlan),
         ),
       );
+      const exploration = normalizeExploration(generated, screenshots);
       const plan = yield* service
         .create({
           sessionId,
           userId: session.user.id,
           intent: generated.intent?.trim() || intent,
-          exploration: normalizeExploration(generated, screenshots),
+          exploration,
+          links: createSequentialLinks(exploration.length),
         })
         .pipe(Effect.catchTags({ ErrorDb: Effect.die }));
 
@@ -165,6 +167,13 @@ function parseScreenshot(value: unknown): ReadonlyArray<UploadedScreenshot> {
   }
   const [key, url] = value.split("\t");
   return key && url ? [{ key, url }] : [];
+}
+
+function createSequentialLinks(count: number) {
+  return Array.from({ length: Math.max(0, count - 1) }, (_, index) => ({
+    from: `step-${index + 1}`,
+    to: `step-${index + 2}`,
+  }));
 }
 
 function decodeGeneratedPlan(text: string) {

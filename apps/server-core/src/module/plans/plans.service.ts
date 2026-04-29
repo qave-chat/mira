@@ -28,6 +28,7 @@ export class PlansService extends Context.Service<PlansService>()("module/PlansS
         sessionId: input.sessionId,
         userId: input.userId,
         exploration: input.exploration,
+        links: input.links ?? createSequentialLinks(input.exploration.length),
         intent: input.intent,
       };
       const row = yield* repo.insert(plan);
@@ -99,8 +100,16 @@ function toPlan(row: PlanRow): Plan {
     sessionId: row.sessionId,
     userId: row.userId,
     exploration: row.exploration,
+    links: row.links,
     intent: row.intent,
     createdAt: row.createdAt.getTime(),
     updatedAt: row.updatedAt.getTime(),
   };
+}
+
+function createSequentialLinks(count: number) {
+  return Array.from({ length: Math.max(0, count - 1) }, (_, index) => ({
+    from: `step-${index + 1}`,
+    to: `step-${index + 2}`,
+  }));
 }
