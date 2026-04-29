@@ -1,6 +1,10 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useAtomRefresh, useAtomSet, useAtomValue } from "@effect/atom-react";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { Cause, Exit } from "effect";
+import { AsyncResult } from "effect/unstable/reactivity";
+import { HttpClient } from "@mira/client-api/http-atom";
 import { SessionCreateDialog } from "@/module/session/ui/session-create-dialog.ui";
 import { SessionList } from "@/module/session/ui/session-list.ui";
 import {
@@ -16,10 +20,16 @@ export const Route = createFileRoute("/sessions")({
 });
 
 function SessionRoute() {
-  const [sessions, setSessions] = useState<Array<{ id: string; name: string; plan: string }>>([]);
+  const router = useRouter();
+  const sessionsAtom = HttpClient.query("sessions", "list", { reactivityKeys: ["sessions"] });
+  const sessionsResult = useAtomValue(sessionsAtom);
+  const refreshSessions = useAtomRefresh(sessionsAtom);
+  const createSessionMutation = useAtomSet(HttpClient.mutation("sessions", "create"), {
+    mode: "promiseExit",
+  });
   const [sessionName, setSessionName] = useState("");
 
-  function createSession(event: FormEvent<HTMLFormElement>) {
+  async function createSession(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const name = sessionName.trim();
@@ -27,16 +37,26 @@ function SessionRoute() {
       return;
     }
 
-    setSessions((currentSessions) => [
-      {
-        id: crypto.randomUUID(),
-        name,
-        plan: "Draft",
-      },
-      ...currentSessions,
-    ]);
+    const exit = await createSessionMutation({ payload: { name } });
+    if (Exit.isFailure(exit)) {
+      console.error("Create session failed:", Cause.pretty(exit.cause));
+      return;
+    }
+
     setSessionName("");
+    refreshSessions();
+    void router.navigate({
+      to: "/sessions/$sessionId",
+      params: { sessionId: exit.value.id },
+      search: { name: exit.value.name },
+    });
   }
+
+  const sessions = AsyncResult.match(sessionsResult, {
+    onInitial: () => [],
+    onSuccess: (result) => result.value,
+    onFailure: () => [],
+  });
 
   return (
     <ModuleLayout>

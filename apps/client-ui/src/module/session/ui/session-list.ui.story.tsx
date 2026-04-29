@@ -4,17 +4,17 @@ import { SessionList, type SessionListItem } from "@/module/session/ui/session-l
 
 const sessions: ReadonlyArray<SessionListItem> = [
   {
-    id: "session-1042",
+    id: "ses_381nfd3ypkSBjEKec5uWk2RZsZL",
     name: "Spring launch cutdown",
     plan: "Creator",
   },
   {
-    id: "session-1041",
+    id: "ses_381nfg8RNlsgzmVzPvEe1CQ1oFy",
     name: "Product walkthrough",
     plan: "Studio",
   },
   {
-    id: "session-1040",
+    id: "ses_381nfjY0Hu96QGYzU9UhB9Yu7DP",
     name: "Customer story edit",
     plan: "Pro",
   },

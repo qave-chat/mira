@@ -6,7 +6,7 @@ const meta: Meta<typeof SessionDetail> = {
   title: "Module/Session/SessionDetail",
   component: SessionDetail,
   args: {
-    sessionId: "session-1042",
+    sessionId: "ses_381nfd3ypkSBjEKec5uWk2RZsZL",
     onGenerateVideo: () => {},
   },
   decorators: [

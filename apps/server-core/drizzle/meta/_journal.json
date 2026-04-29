@@ -8,6 +8,13 @@
       "when": 1777422320834,
       "tag": "0000_huge_shinobi_shaw",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777422320835,
+      "tag": "0001_add_sessions",
+      "breakpoints": true
     }
   ]
 }

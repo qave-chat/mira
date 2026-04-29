@@ -1,4 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useAtomValue } from "@effect/atom-react";
+import { AsyncResult } from "effect/unstable/reactivity";
+import { HttpClient } from "@mira/client-api/http-atom";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,14 +11,29 @@ import {
   BreadcrumbSeparator,
 } from "@/shared/ui/breadcrumb.ui";
 import { SessionDetail } from "@/module/session/ui/session-detail.ui";
-import { ModuleLayout, ModuleLayoutBody, ModuleLayoutHeader } from "@/shared/ui/module-layout.ui";
+import { ModuleLayout, ModuleLayoutHeader } from "@/shared/ui/module-layout.ui";
 
 export const Route = createFileRoute("/sessions/$sessionId")({
+  validateSearch: (search): { name?: string } => ({
+    name: typeof search.name === "string" && search.name.length > 0 ? search.name : undefined,
+  }),
   component: SessionDetailRoute,
 });
 
 function SessionDetailRoute() {
   const { sessionId } = Route.useParams();
+  const { name } = Route.useSearch();
+  const sessionResult = useAtomValue(
+    HttpClient.query("sessions", "get", {
+      params: { id: sessionId },
+      reactivityKeys: ["sessions", sessionId],
+    }),
+  );
+  const sessionName = AsyncResult.match(sessionResult, {
+    onInitial: () => name,
+    onSuccess: (result) => result.value.name,
+    onFailure: () => name,
+  });
 
   return (
     <ModuleLayout>
@@ -27,14 +45,14 @@ function SessionDetailRoute() {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>{sessionId}</BreadcrumbPage>
+              <BreadcrumbPage>{sessionName ?? sessionId}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </ModuleLayoutHeader>
-      <ModuleLayoutBody>
-        <SessionDetail sessionId={sessionId} onGenerateVideo={() => {}} />
-      </ModuleLayoutBody>
+      <div className="min-h-0 w-full flex-1">
+        <SessionDetail />
+      </div>
     </ModuleLayout>
   );
 }
