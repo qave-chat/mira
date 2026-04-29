@@ -7,6 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const withModuleLogs = Effect.annotateLogs({ module: "video-generate" });
+const DEFAULT_RENDER_CONCURRENCY = 1;
 
 export class ErrorVideoGenerateRender extends Schema.TaggedErrorClass<ErrorVideoGenerateRender>()(
   "ErrorVideoGenerateRender",
@@ -19,6 +20,11 @@ const renderError = (cause: unknown) =>
     cause,
   });
 
+const parseRenderConcurrency = () => {
+  const value = Number.parseInt(process.env.MIRA_VIDEO_RENDER_CONCURRENCY ?? "", 10);
+  return Number.isFinite(value) && value > 0 ? value : DEFAULT_RENDER_CONCURRENCY;
+};
+
 export class VideoGenerateRenderer extends Context.Service<VideoGenerateRenderer>()(
   "module/VideoGenerateRenderer",
   {
@@ -27,6 +33,7 @@ export class VideoGenerateRenderer extends Context.Service<VideoGenerateRenderer
       const entryPoint = path.join(moduleDir, "remotion/index.ts");
       const outDir =
         process.env.MIRA_VIDEO_GENERATE_DIR ?? path.join(tmpdir(), "mira", "video-generate");
+      const renderConcurrency = parseRenderConcurrency();
       yield* Effect.tryPromise({
         try: () => mkdir(outDir, { recursive: true }),
         catch: renderError,
@@ -77,6 +84,7 @@ export class VideoGenerateRenderer extends Context.Service<VideoGenerateRenderer
           try: () =>
             renderMedia({
               composition,
+              concurrency: renderConcurrency,
               serveUrl,
               codec: "h264",
               outputLocation,
