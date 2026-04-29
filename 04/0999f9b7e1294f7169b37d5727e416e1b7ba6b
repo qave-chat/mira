@@ -1,0 +1,34 @@
+apps/server-core/src/platform/db.contract.ts
+  3acafabc4adfcf45 3,18
+apps/server-core/src/main.ts
+  3acafabc4adfcf45 37
+apps/server-core/package.json
+  3acafabc4adfcf45 15
+apps/server-core/src/platform/seed.ts
+  3acafabc4adfcf45 1-85
+apps/server-core/src/module/plans/plans.rpc.contract.ts
+  3acafabc4adfcf45 4,11,17,23
+apps/server-core/src/module/plans/plans.rpc.impl.ts
+  3acafabc4adfcf45 2,10-11,13,16-17,20,23-24,26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "040999f9b7e1294f7169b37d5727e416e1b7ba6b",
+  "prompts": {
+    "3acafabc4adfcf45": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_22947ae6bffegj7eg2N1ULBf3X",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 206,
+      "total_deletions": 112,
+      "accepted_lines": 103,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/a9efde50d7138dbd9a8f78eacad941673a832d1a8fea90f80d7b2ec6699f67a5"
+    }
+  }
+}
