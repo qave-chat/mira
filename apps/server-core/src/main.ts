@@ -34,6 +34,7 @@ const PlansLayers = PlansLive.pipe(
   Layer.provide(PlansRepoLive),
   Layer.provide(SessionsServiceLive),
   Layer.provide(SessionsRepoLive),
+  Layer.provide(AuthLive),
   Layer.provide(DbLive),
 );
 

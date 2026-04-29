@@ -12,6 +12,7 @@
     "test": "bun --bun x vitest run",
     "test:watch": "bun --bun x vitest",
     "typecheck": "tsgo --noEmit",
+    "seed": "bun src/platform/seed.ts",
     "db": "drizzle-kit"
   },
   "dependencies": {
