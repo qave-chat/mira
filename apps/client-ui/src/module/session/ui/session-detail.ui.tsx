@@ -14,8 +14,9 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { AudioLinesIcon, SendIcon, XIcon } from "lucide-react";
+import { AudioLinesIcon, SendIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { SessionImagePreviewDialog } from "@/module/session/ui/session-image-preview-dialog.ui";
 import { useTheme } from "@/shared/provider/theme.provider";
 import { Button } from "@/shared/ui/button.ui";
 
@@ -25,6 +26,12 @@ type WorkflowImageAttachment = {
   name: string;
   size: number;
   url: string;
+};
+
+type PendingImageUpload = {
+  id: string;
+  name: string;
+  previewUrl: string;
 };
 
 type UploadedImage = {
@@ -152,7 +159,7 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
   const [workflowPrompt, setWorkflowPrompt] = useState("");
   const [realtimeDraft, setRealtimeDraft] = useState("");
   const [attachments, setAttachments] = useState<WorkflowImageAttachment[]>([]);
-  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [pendingUploads, setPendingUploads] = useState<PendingImageUpload[]>([]);
   const [isCreatingPlan, setIsCreatingPlan] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [planError, setPlanError] = useState<string | null>(null);
@@ -167,6 +174,7 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
   const displayedPrompt = realtimeDraft
     ? appendTranscript(workflowPrompt, realtimeDraft)
     : workflowPrompt;
+  const isUploadingImages = pendingUploads.length > 0;
   const canGeneratePlan = displayedPrompt.trim().length > 0 || attachments.length > 0;
 
   useEffect(() => {
@@ -217,12 +225,18 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
       return;
     }
 
+    const pendingImages = files.map((file) => ({
+      id: crypto.randomUUID(),
+      name: file.name,
+      previewUrl: URL.createObjectURL(file),
+    }));
+
     const formData = new FormData();
     for (const file of files) {
       formData.append("files", file);
     }
 
-    setIsUploadingImages(true);
+    setPendingUploads((current) => [...current, ...pendingImages]);
     setUploadError(null);
     try {
       const response = await fetch("/api/uploads/images", {
@@ -246,7 +260,12 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "Image upload failed");
     } finally {
-      setIsUploadingImages(false);
+      setPendingUploads((current) =>
+        current.filter((upload) => !pendingImages.some((pending) => pending.id === upload.id)),
+      );
+      for (const image of pendingImages) {
+        URL.revokeObjectURL(image.previewUrl);
+      }
     }
   }
 
@@ -402,6 +421,11 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
   }
 
   async function createPlan() {
+    if (isUploadingImages) {
+      setPlanError("Wait for image uploads to finish before creating a plan.");
+      return;
+    }
+
     const intent = displayedPrompt.trim();
     if (intent.length === 0 || attachments.length === 0) {
       setPlanError("Describe the workflow and attach at least one screenshot.");
@@ -508,25 +532,27 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
         onPaste={pasteImages}
         onSubmit={generatePlan}
       >
-        {attachments.length > 0 ? (
+        {attachments.length > 0 || pendingUploads.length > 0 ? (
           <ul
             data-slot="session-workflow-composer-attachments"
             className="mb-3 flex flex-wrap gap-2"
           >
+            {pendingUploads.map((upload) => (
+              <li key={upload.id}>
+                <SessionImagePreviewDialog
+                  src={upload.previewUrl}
+                  alt="Uploading attachment preview"
+                  isUploading
+                />
+              </li>
+            ))}
             {attachments.map((attachment) => (
-              <li
-                key={attachment.id}
-                className="flex max-w-full items-center gap-2 rounded-full border bg-muted/40 py-1 pr-2 pl-3 text-sm text-muted-foreground shadow-sm"
-              >
-                <span className="truncate">{attachment.name}</span>
-                <button
-                  type="button"
-                  aria-label={`Remove ${attachment.name}`}
-                  className="flex size-5 shrink-0 items-center justify-center rounded-full hover:bg-muted hover:text-foreground"
-                  onClick={() => removeAttachment(attachment.id)}
-                >
-                  <XIcon className="size-3.5" />
-                </button>
+              <li key={attachment.id}>
+                <SessionImagePreviewDialog
+                  src={attachment.url}
+                  alt={`${attachment.name} preview`}
+                  onRemove={() => removeAttachment(attachment.id)}
+                />
               </li>
             ))}
           </ul>
@@ -591,7 +617,7 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
           <Button
             type="submit"
             size="lg"
-            disabled={!canGeneratePlan || isCreatingPlan}
+            disabled={!canGeneratePlan || isCreatingPlan || isUploadingImages}
             className="bg-neutral-900 px-5 text-neutral-50 shadow-md shadow-black/20 hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-300"
           >
             <SendIcon />
