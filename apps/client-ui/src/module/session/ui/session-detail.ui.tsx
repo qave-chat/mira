@@ -17,11 +17,26 @@ import { AudioLinesIcon, PaperclipIcon, SendIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/shared/provider/theme.provider";
 import { Button } from "@/shared/ui/button.ui";
+import { cn } from "@/shared/util/cn.util";
 
 type WorkflowImageAttachment = {
   id: string;
+  key: string;
   name: string;
   size: number;
+  url: string;
+};
+
+type UploadedImage = {
+  key: string;
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+};
+
+type UploadImagesResponse = {
+  files: UploadedImage[];
 };
 
 type RealtimeSessionResponse = {
@@ -108,6 +123,8 @@ export function SessionDetail() {
   const [workflowPrompt, setWorkflowPrompt] = useState("");
   const [realtimeDraft, setRealtimeDraft] = useState("");
   const [attachments, setAttachments] = useState<WorkflowImageAttachment[]>([]);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isConnectingAsr, setIsConnectingAsr] = useState(false);
   const [asrError, setAsrError] = useState<string | null>(null);
@@ -166,10 +183,24 @@ export function SessionDetail() {
   }
 
   function openImagePicker() {
-    fileInputRef.current?.click();
+    const input = fileInputRef.current;
+    if (!input || isUploadingImages) {
+      return;
+    }
+
+    try {
+      if (typeof input.showPicker === "function") {
+        input.showPicker();
+        return;
+      }
+    } catch {
+      // Some browsers reject showPicker() for visually hidden inputs; click() is the fallback.
+    }
+
+    input.click();
   }
 
-  function attachImages(event: React.ChangeEvent<HTMLInputElement>) {
+  async function attachImages(event: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? []).filter((file) =>
       file.type.startsWith("image/"),
     );
@@ -177,15 +208,38 @@ export function SessionDetail() {
       return;
     }
 
-    setAttachments((current) => [
-      ...current,
-      ...files.map((file) => ({
-        id: crypto.randomUUID(),
-        name: file.name,
-        size: file.size,
-      })),
-    ]);
-    event.target.value = "";
+    const formData = new FormData();
+    for (const file of files) {
+      formData.append("files", file);
+    }
+
+    setIsUploadingImages(true);
+    setUploadError(null);
+    try {
+      const response = await fetch("/api/uploads/images", {
+        body: formData,
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error(await readUploadError(response));
+      }
+      const result = (await response.json()) as UploadImagesResponse;
+      setAttachments((current) => [
+        ...current,
+        ...result.files.map((file) => ({
+          id: crypto.randomUUID(),
+          key: file.key,
+          name: file.name,
+          size: file.size,
+          url: file.url,
+        })),
+      ]);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Image upload failed");
+    } finally {
+      setIsUploadingImages(false);
+      event.target.value = "";
+    }
   }
 
   function removeAttachment(id: string) {
@@ -413,6 +467,10 @@ export function SessionDetail() {
         {isConnectingAsr ? (
           <p className="mt-2 text-xs text-muted-foreground">Connecting realtime ASR...</p>
         ) : null}
+        {isUploadingImages ? (
+          <p className="mt-2 text-xs text-muted-foreground">Uploading images...</p>
+        ) : null}
+        {uploadError ? <p className="mt-2 text-xs text-destructive">{uploadError}</p> : null}
         {asrError ? <p className="mt-2 text-xs text-destructive">{asrError}</p> : null}
         <div className="mt-3 flex items-center justify-between gap-3">
           <div className="flex shrink-0 items-center gap-2">
@@ -421,18 +479,21 @@ export function SessionDetail() {
               type="file"
               accept="image/*"
               multiple
-              className="hidden"
+              className="pointer-events-none absolute size-px opacity-0"
               onChange={attachImages}
             />
-            <Button
+            <button
               type="button"
-              variant="outline"
-              size="icon-lg"
               aria-label="Attach images"
+              className={cn(
+                "inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-background text-sm font-medium transition-all outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px [&_svg]:pointer-events-none [&_svg]:size-4",
+                isUploadingImages && "pointer-events-none opacity-50",
+              )}
+              disabled={isUploadingImages}
               onClick={openImagePicker}
             >
               <PaperclipIcon />
-            </Button>
+            </button>
             <Button
               type="button"
               variant={isRecording ? "default" : "outline"}
@@ -452,10 +513,10 @@ export function SessionDetail() {
             type="submit"
             size="lg"
             disabled={!canGeneratePlan}
-            className="bg-[#d97452] px-5 text-white shadow-md shadow-[#d97452]/30 hover:bg-[#c96543]"
+            className="bg-neutral-900 px-5 text-neutral-50 shadow-md shadow-black/20 hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-300"
           >
             <SendIcon />
-            Send
+            Create plan
           </Button>
         </div>
       </form>
@@ -522,4 +583,13 @@ function appendTranscript(current: string, transcript: string) {
   }
 
   return `${trimmed} ${transcript}`;
+}
+
+async function readUploadError(response: Response) {
+  try {
+    const body = (await response.json()) as { error?: unknown };
+    return typeof body.error === "string" ? body.error : "Image upload failed";
+  } catch {
+    return "Image upload failed";
+  }
 }

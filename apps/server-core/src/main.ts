@@ -21,6 +21,7 @@ import { R2Live } from "./platform/r2.impl";
 import { RpcLive } from "./platform/rpc.impl";
 import { PgClientLive } from "./platform/sql.impl";
 import { StaticLive } from "./platform/static.impl";
+import { UploadLive } from "./platform/upload.impl";
 import { WorkflowEngineOnlyLive } from "./platform/workflow.impl";
 
 const VideoGenerateLayers = Layer.mergeAll(VideoGenerateLive, VideoGenerateWorkflowLive).pipe(
@@ -43,7 +44,13 @@ const Handlers = Layer.mergeAll(HealthLive, VideoGenerateLayers, PlansLayers);
 
 const AuthRoutes = AuthCatchallLive.pipe(Layer.provide(AuthLive), Layer.provide(DbLive));
 
-const HttpRoutes = Layer.mergeAll(AuthRoutes, AsrLive, HttpApiLive, StaticLive);
+const UploadRoutes = UploadLive.pipe(
+  Layer.provide(AuthLive),
+  Layer.provide(DbLive),
+  Layer.provide(R2Live),
+);
+
+const HttpRoutes = Layer.mergeAll(AuthRoutes, AsrLive, HttpApiLive, UploadRoutes, StaticLive);
 
 const AppLive = Layer.mergeAll(
   // NDJSON instead of JSON so streaming RPCs (SessionEventsWatch) can frame
