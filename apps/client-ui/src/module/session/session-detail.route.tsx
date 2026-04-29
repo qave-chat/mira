@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { useAtomValue } from "@effect/atom-react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useAtomRefresh, useAtomSet, useAtomValue } from "@effect/atom-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Cause, Exit } from "effect";
 import { AsyncResult } from "effect/unstable/reactivity";
+import type { Plan } from "@mira/server-core/rpc";
 import { HttpClient } from "@mira/client-api/http-atom";
-import type { GeneratedVideo } from "@mira/server-core/rpc";
+import { RpcClient } from "@mira/client-api/rpc-atom";
+import { PlanSelector } from "@/module/session/ui/plan-selector.ui";
 import { SessionDetail } from "@/module/session/ui/session-detail.ui";
-import { createGeneratedVideo, createShare } from "@/module/share/share.api";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -14,7 +16,11 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/shared/ui/breadcrumb.ui";
-import { ModuleLayout, ModuleLayoutHeader } from "@/shared/ui/module-layout.ui";
+import {
+  ModuleLayout,
+  ModuleLayoutActions,
+  ModuleLayoutHeader,
+} from "@/shared/ui/module-layout.ui";
 
 export const Route = createFileRoute("/sessions/$sessionId")({
   validateSearch: (search): { name?: string } => ({
@@ -26,12 +32,14 @@ export const Route = createFileRoute("/sessions/$sessionId")({
 function SessionDetailRoute() {
   const { sessionId } = Route.useParams();
   const { name } = Route.useSearch();
-  const navigate = useNavigate();
-  const [sourceUrl, setSourceUrl] = useState("");
-  const [generatedVideo, setGeneratedVideo] = useState<GeneratedVideo | null>(null);
+  const [videoExecutionId, setVideoExecutionId] = useState<string | undefined>();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
+  const [isPlanSelectorExpanded, setIsPlanSelectorExpanded] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>();
   const [videoError, setVideoError] = useState<string | null>(null);
+  const startVideoGenerate = useAtomSet(RpcClient.mutation("VideoGenerateStart"), {
+    mode: "promiseExit",
+  });
   const sessionResult = useAtomValue(
     HttpClient.query("sessions", "get", {
       params: { id: sessionId },
@@ -43,32 +51,80 @@ function SessionDetailRoute() {
     onSuccess: (result) => result.value.name,
     onFailure: () => name,
   });
+  const plansResult = useAtomValue(
+    RpcClient.query("PlanList", { sessionId }, { reactivityKeys: ["plans", sessionId] }),
+  );
+  const plans = AsyncResult.match(plansResult, {
+    onInitial: () => [] satisfies ReadonlyArray<Plan>,
+    onSuccess: (result) => result.value,
+    onFailure: () => [] satisfies ReadonlyArray<Plan>,
+  });
+  const selectedPlan = plans.find((plan) => plan.id === selectedPlanId) ?? plans[0];
+  const videoStatusAtom = RpcClient.query("VideoGenerateGet", {
+    executionId: videoExecutionId ?? "idle",
+  });
+  const videoStatusResult = useAtomValue(videoStatusAtom);
+  const refreshVideoStatus = useAtomRefresh(videoStatusAtom);
+  const videoStatus = videoExecutionId
+    ? AsyncResult.match(videoStatusResult, {
+        onInitial: () => undefined,
+        onSuccess: (result) => result.value,
+        onFailure: () => undefined,
+      })
+    : undefined;
+  const generatedVideoUrl =
+    videoStatus?.status === "succeeded" ? videoStatus.result.videoUrl : undefined;
 
-  async function generateVideo() {
-    setIsGenerating(true);
-    setVideoError(null);
-    try {
-      const nextGeneratedVideo = await createGeneratedVideo(sourceUrl);
-      setGeneratedVideo(nextGeneratedVideo);
-    } catch (cause) {
-      setVideoError(cause instanceof Error ? cause.message : "Video could not be generated.");
-    } finally {
+  useEffect(() => {
+    if (!selectedPlanId && plans[0]) {
+      setSelectedPlanId(plans[0].id);
+    }
+  }, [plans, selectedPlanId]);
+
+  useEffect(() => {
+    if (!videoExecutionId || videoStatus?.status !== "running") {
+      return;
+    }
+
+    const interval = window.setInterval(refreshVideoStatus, 2_000);
+    return () => window.clearInterval(interval);
+  }, [refreshVideoStatus, videoExecutionId, videoStatus?.status]);
+
+  useEffect(() => {
+    if (videoStatus?.status === "failed") {
+      setVideoError(videoStatus.error);
       setIsGenerating(false);
     }
+    if (videoStatus?.status === "succeeded") {
+      setIsGenerating(false);
+    }
+  }, [videoStatus]);
+
+  async function generateVideo() {
+    if (!selectedPlan) {
+      setVideoError("Select a plan before generating video.");
+      return;
+    }
+
+    setIsGenerating(true);
+    setVideoError(null);
+    const exit = await startVideoGenerate({
+      payload: {
+        prompt: selectedPlan.intent,
+        photoKeys: selectedPlan.exploration.map((item) => item.screenshot),
+      },
+    });
+    if (Exit.isFailure(exit)) {
+      setVideoError(Cause.pretty(exit.cause));
+      setIsGenerating(false);
+      return;
+    }
+    setVideoExecutionId(exit.value.executionId);
+    refreshVideoStatus();
   }
 
-  async function shareVideo() {
-    if (!generatedVideo) return;
-    setIsSharing(true);
-    setVideoError(null);
-    try {
-      const share = await createShare(generatedVideo.id);
-      void navigate({ to: "/share/$shareId", params: { shareId: share.id } });
-    } catch (cause) {
-      setVideoError(cause instanceof Error ? cause.message : "Share could not be created.");
-    } finally {
-      setIsSharing(false);
-    }
+  function shareVideo() {
+    setVideoError("Sharing needs a persisted generated video id before it can be enabled.");
   }
 
   return (
@@ -85,19 +141,26 @@ function SessionDetailRoute() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
+        <ModuleLayoutActions>
+          <PlanSelector
+            plans={plans}
+            selectedPlanId={selectedPlanId}
+            isExpanded={isPlanSelectorExpanded}
+            sessionName={sessionName ?? sessionId}
+            generatedVideoUrl={generatedVideoUrl}
+            isGenerating={isGenerating || videoStatus?.status === "running"}
+            isSharing={false}
+            canShare={false}
+            error={videoError}
+            onExpandedChange={setIsPlanSelectorExpanded}
+            onPlanSelect={setSelectedPlanId}
+            onGenerateVideo={generateVideo}
+            onShare={shareVideo}
+          />
+        </ModuleLayoutActions>
       </ModuleLayoutHeader>
       <div className="min-h-0 w-full flex-1">
-        <SessionDetail
-          sessionName={sessionName ?? sessionId}
-          sourceUrl={sourceUrl}
-          generatedVideoUrl={generatedVideo?.videoUrl}
-          isGenerating={isGenerating}
-          isSharing={isSharing}
-          error={videoError}
-          onSourceUrlChange={setSourceUrl}
-          onGenerateVideo={generateVideo}
-          onShare={shareVideo}
-        />
+        <SessionDetail />
       </div>
     </ModuleLayout>
   );

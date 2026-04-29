@@ -3,7 +3,8 @@ import { Effect, Layer } from "effect";
 import { Db } from "../../platform/db.contract";
 import { makeTestDb } from "../../platform/db.impl";
 import { PlansRepoLive } from "./plans.repo";
-import { ErrorPlanNotFound, PlansService, PlansServiceLive } from "./plans.service";
+import { ErrorPlanNotFound } from "./plans.error";
+import { PlansService, PlansServiceLive } from "./plans.service";
 import { SessionsRepoLive } from "../sessions/sessions.repo";
 import { SessionsService, SessionsServiceLive } from "../sessions/sessions.service";
 

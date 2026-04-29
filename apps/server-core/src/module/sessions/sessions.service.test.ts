@@ -3,7 +3,8 @@ import { Effect, Layer } from "effect";
 import { Db } from "../../platform/db.contract";
 import { makeTestDb } from "../../platform/db.impl";
 import { SessionsRepoLive } from "./sessions.repo";
-import { ErrorSessionNotFound, SessionsService, SessionsServiceLive } from "./sessions.service";
+import { ErrorSessionNotFound } from "./sessions.error";
+import { SessionsService, SessionsServiceLive } from "./sessions.service";
 
 const TestDbLive = Layer.effect(
   Db,

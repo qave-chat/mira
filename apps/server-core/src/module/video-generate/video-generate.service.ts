@@ -1,17 +1,13 @@
-import { Cause, Context, Effect, Exit, Layer, Option, Schema } from "effect";
+import { Cause, Context, Effect, Exit, Layer, Option } from "effect";
 import { randomUUID } from "node:crypto";
 import { WorkflowEngine } from "effect/unstable/workflow";
 import { R2 } from "../../platform/r2.contract";
+import { ErrorVideoGenerateInvalidInput } from "./video-generate.error";
 import { VideoGenerateStartInput, type VideoGenerateStatus } from "./video-generate.schema";
 import { VideoGenerateWorkflow } from "./video-generate.workflow";
 
 const withModuleLogs = Effect.annotateLogs({ module: "video-generate" });
 const VIDEO_URL_EXPIRES_IN_SECONDS = 86_400;
-
-export class ErrorVideoGenerateInvalidInput extends Schema.TaggedErrorClass<ErrorVideoGenerateInvalidInput>()(
-  "ErrorVideoGenerateInvalidInput",
-  { message: Schema.String },
-) {}
 
 export class VideoGenerateService extends Context.Service<VideoGenerateService>()(
   "module/VideoGenerateService",

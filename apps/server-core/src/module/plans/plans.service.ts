@@ -1,5 +1,6 @@
-import { Clock, Context, Effect, Layer, Schema } from "effect";
+import { Clock, Context, Effect, Layer } from "effect";
 import type { Plan, PlanCreatePayload, PlanInsertRow, PlanRow } from "./plans.schema";
+import { ErrorPlanNotFound } from "./plans.error";
 import { PlansRepo } from "./plans.repo";
 import { SessionsService } from "../sessions/sessions.service";
 
@@ -10,11 +11,6 @@ const KSUID_RANDOM_BYTE_LENGTH = 16;
 const PLAN_ID_PREFIX = "pla";
 
 const withModuleLogs = Effect.annotateLogs({ module: "plans" });
-
-export class ErrorPlanNotFound extends Schema.TaggedErrorClass<ErrorPlanNotFound>()(
-  "ErrorPlanNotFound",
-  { id: Schema.String },
-) {}
 
 export class PlansService extends Context.Service<PlansService>()("module/PlansService", {
   make: Effect.gen(function* () {

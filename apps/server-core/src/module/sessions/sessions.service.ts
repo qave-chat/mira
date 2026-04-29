@@ -1,4 +1,4 @@
-import { Clock, Context, Effect, Layer, Schema } from "effect";
+import { Clock, Context, Effect, Layer } from "effect";
 import type {
   Session,
   SessionCreatePayload,
@@ -6,6 +6,7 @@ import type {
   SessionRow,
 } from "./sessions.schema";
 import { SessionsRepo } from "./sessions.repo";
+import { ErrorSessionNotFound } from "./sessions.error";
 
 const KSUID_EPOCH_SECONDS = 1_400_000_000;
 const KSUID_BASE62_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -15,11 +16,6 @@ const SESSION_ID_PREFIX = "ses";
 const DEFAULT_SESSION_PLAN = "Draft";
 
 const withModuleLogs = Effect.annotateLogs({ module: "sessions" });
-
-export class ErrorSessionNotFound extends Schema.TaggedErrorClass<ErrorSessionNotFound>()(
-  "ErrorSessionNotFound",
-  { id: Schema.String },
-) {}
 
 export class SessionsService extends Context.Service<SessionsService>()("module/SessionsService", {
   make: Effect.gen(function* () {

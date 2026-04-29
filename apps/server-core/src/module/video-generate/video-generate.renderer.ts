@@ -2,6 +2,7 @@ import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
 import { Context, Effect, Layer, Schema } from "effect";
 import { mkdir, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -24,7 +25,8 @@ export class VideoGenerateRenderer extends Context.Service<VideoGenerateRenderer
     make: Effect.gen(function* () {
       const moduleDir = path.dirname(fileURLToPath(import.meta.url));
       const entryPoint = path.join(moduleDir, "remotion/index.ts");
-      const outDir = path.join(process.cwd(), ".mira", "video-generate");
+      const outDir =
+        process.env.MIRA_VIDEO_GENERATE_DIR ?? path.join(tmpdir(), "mira", "video-generate");
       yield* Effect.tryPromise({
         try: () => mkdir(outDir, { recursive: true }),
         catch: renderError,

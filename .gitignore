@@ -9,3 +9,4 @@ cdk.out
 .env.*
 !.env.example
 !.env.local
+apps/client-ui/.tanstack/tmp

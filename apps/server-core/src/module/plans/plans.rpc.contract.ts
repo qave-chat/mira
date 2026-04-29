@@ -1,8 +1,8 @@
 import { Schema } from "effect";
 import { Rpc, RpcGroup } from "effect/unstable/rpc";
-import { ErrorSessionNotFound } from "../sessions/sessions.service";
+import { ErrorSessionNotFound } from "../sessions/sessions.error";
+import { ErrorPlanNotFound } from "./plans.error";
 import { Plan, PlanCreatePayload } from "./plans.schema";
-import { ErrorPlanNotFound } from "./plans.service";
 
 export class PlanCreate extends Rpc.make("PlanCreate", {
   payload: PlanCreatePayload,
