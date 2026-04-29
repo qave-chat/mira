@@ -8,16 +8,16 @@ import {
   type NodeProps,
   type ReactFlowInstance,
   ReactFlow,
+  MarkerType,
   useEdgesState,
   useNodesState,
   useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { AudioLinesIcon, PaperclipIcon, SendIcon, XIcon } from "lucide-react";
+import { AudioLinesIcon, SendIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/shared/provider/theme.provider";
 import { Button } from "@/shared/ui/button.ui";
-import { cn } from "@/shared/util/cn.util";
 
 type WorkflowImageAttachment = {
   id: string;
@@ -39,6 +39,20 @@ type UploadImagesResponse = {
   files: UploadedImage[];
 };
 
+type GeneratedPlan = {
+  id: string;
+  intent: string;
+  exploration: Array<{
+    screenshot: string;
+    reason: string;
+  }>;
+};
+
+type GeneratePlanResponse = {
+  plan?: GeneratedPlan;
+  error?: string;
+};
+
 type RealtimeSessionResponse = {
   client_secret?: {
     value?: string;
@@ -57,6 +71,8 @@ const REALTIME_DRAFT_FLUSH_MS = 40;
 
 type WelcomeNodeData = {
   label: string;
+  screenshotUrl?: string;
+  reason?: string;
 };
 
 type WelcomeNodeType = Node<WelcomeNodeData, "welcome">;
@@ -82,6 +98,14 @@ function WelcomeNode({ id, data }: NodeProps<SessionNode>) {
         x
       </button>
       <div className="text-base font-semibold">{data.label}</div>
+      {data.screenshotUrl ? (
+        <img
+          src={data.screenshotUrl}
+          alt="Workflow step screenshot"
+          className="mt-3 h-32 w-full rounded-lg border border-[#141413]/10 object-cover"
+        />
+      ) : null}
+      {data.reason ? <p className="mt-3 max-w-72 text-sm leading-5">{data.reason}</p> : null}
     </div>
   );
 }
@@ -111,10 +135,15 @@ type ContextMenuPosition = {
   y: number;
 };
 
-export function SessionDetail() {
+export type SessionDetailProps = {
+  sessionId: string;
+  onPlanCreated?: (planId: string) => void;
+};
+
+export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) {
   const { resolvedTheme } = useTheme();
   const [nodes, setNodes, onNodesChange] = useNodesState<SessionNode>(initialNodes);
-  const [edges, , onEdgesChange] = useEdgesState<Edge>(initialEdges);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
   const [contextMenuPosition, setContextMenuPosition] = useState<ContextMenuPosition | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance<
     SessionNode,
@@ -124,11 +153,12 @@ export function SessionDetail() {
   const [realtimeDraft, setRealtimeDraft] = useState("");
   const [attachments, setAttachments] = useState<WorkflowImageAttachment[]>([]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [isCreatingPlan, setIsCreatingPlan] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [planError, setPlanError] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isConnectingAsr, setIsConnectingAsr] = useState(false);
   const [asrError, setAsrError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -180,24 +210,6 @@ export function SessionDetail() {
 
     setNodes((currentNodes) => [...currentNodes, newNode]);
     closeContextMenu();
-  }
-
-  function openImagePicker() {
-    const input = fileInputRef.current;
-    if (!input || isUploadingImages) {
-      return;
-    }
-
-    try {
-      if (typeof input.showPicker === "function") {
-        input.showPicker();
-        return;
-      }
-    } catch {
-      // Some browsers reject showPicker() for visually hidden inputs; click() is the fallback.
-    }
-
-    input.click();
   }
 
   async function attachImages(event: React.ChangeEvent<HTMLInputElement>) {
@@ -374,6 +386,68 @@ export function SessionDetail() {
 
   function generatePlan(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    void createPlan();
+  }
+
+  async function createPlan() {
+    const intent = displayedPrompt.trim();
+    if (intent.length === 0 || attachments.length === 0) {
+      setPlanError("Describe the workflow and attach at least one screenshot.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("sessionId", sessionId);
+    formData.append("intent", intent);
+    for (const attachment of attachments) {
+      formData.append("screenshots", `${attachment.key}\t${attachment.url}`);
+    }
+
+    setIsCreatingPlan(true);
+    setPlanError(null);
+    try {
+      const response = await fetch("/api/plans/generate", { method: "POST", body: formData });
+      const result = (await response.json()) as GeneratePlanResponse;
+      if (!response.ok || !result.plan) {
+        throw new Error(result.error ?? "Plan generation failed");
+      }
+      renderPlan(result.plan, attachments);
+      setWorkflowPrompt("");
+      setRealtimeDraft("");
+      realtimeDraftRef.current = "";
+      onPlanCreated?.(result.plan.id);
+    } catch (error) {
+      setPlanError(error instanceof Error ? error.message : "Plan generation failed");
+    } finally {
+      setIsCreatingPlan(false);
+    }
+  }
+
+  function renderPlan(
+    plan: GeneratedPlan,
+    currentAttachments: ReadonlyArray<WorkflowImageAttachment>,
+  ) {
+    const attachmentByKey = new Map(
+      currentAttachments.map((attachment) => [attachment.key, attachment]),
+    );
+    const planNodes: SessionNode[] = plan.exploration.map((item, index) => ({
+      id: `plan-${plan.id}-${index}`,
+      type: "placeholder",
+      position: { x: 120 + index * 360, y: 120 },
+      data: {
+        label: `Step ${index + 1}`,
+        reason: item.reason,
+        screenshotUrl: attachmentByKey.get(item.screenshot)?.url,
+      },
+    }));
+    const planEdges: Edge[] = planNodes.slice(1).map((node, index) => ({
+      id: `plan-${plan.id}-edge-${index}`,
+      source: planNodes[index]?.id ?? "",
+      target: node.id,
+      markerEnd: { type: MarkerType.ArrowClosed },
+    }));
+    setNodes(planNodes);
+    setEdges(planEdges);
   }
 
   return (
@@ -471,29 +545,21 @@ export function SessionDetail() {
           <p className="mt-2 text-xs text-muted-foreground">Uploading images...</p>
         ) : null}
         {uploadError ? <p className="mt-2 text-xs text-destructive">{uploadError}</p> : null}
+        {isCreatingPlan ? (
+          <p className="mt-2 text-xs text-muted-foreground">Creating plan...</p>
+        ) : null}
+        {planError ? <p className="mt-2 text-xs text-destructive">{planError}</p> : null}
         {asrError ? <p className="mt-2 text-xs text-destructive">{asrError}</p> : null}
         <div className="mt-3 flex items-center justify-between gap-3">
           <div className="flex shrink-0 items-center gap-2">
             <input
-              ref={fileInputRef}
               type="file"
               accept="image/*"
               multiple
-              className="pointer-events-none absolute size-px opacity-0"
+              disabled={isUploadingImages}
+              className="max-w-48 cursor-pointer rounded-lg border border-border bg-background text-sm text-muted-foreground file:mr-3 file:h-9 file:cursor-pointer file:border-0 file:border-r file:border-border file:bg-muted file:px-3 file:text-sm file:font-medium file:text-foreground hover:file:bg-muted/80 disabled:pointer-events-none disabled:opacity-50"
               onChange={attachImages}
             />
-            <button
-              type="button"
-              aria-label="Attach images"
-              className={cn(
-                "inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-background text-sm font-medium transition-all outline-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px [&_svg]:pointer-events-none [&_svg]:size-4",
-                isUploadingImages && "pointer-events-none opacity-50",
-              )}
-              disabled={isUploadingImages}
-              onClick={openImagePicker}
-            >
-              <PaperclipIcon />
-            </button>
             <Button
               type="button"
               variant={isRecording ? "default" : "outline"}
@@ -512,11 +578,11 @@ export function SessionDetail() {
           <Button
             type="submit"
             size="lg"
-            disabled={!canGeneratePlan}
+            disabled={!canGeneratePlan || isCreatingPlan}
             className="bg-neutral-900 px-5 text-neutral-50 shadow-md shadow-black/20 hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-neutral-300"
           >
             <SendIcon />
-            Create plan
+            {isCreatingPlan ? "Creating..." : "Create plan"}
           </Button>
         </div>
       </form>

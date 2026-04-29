@@ -3,6 +3,7 @@ import { RpcSerialization } from "effect/unstable/rpc";
 import { BunHttpServer, BunRuntime } from "@effect/platform-bun";
 import { HttpRouter } from "effect/unstable/http";
 import { HealthLive } from "./module/health/health.rpc.impl";
+import { PlansGenerateLive } from "./module/plans/plans.generate.impl";
 import { PlansRepoLive } from "./module/plans/plans.repo";
 import { PlansLive } from "./module/plans/plans.rpc.impl";
 import { PlansServiceLive } from "./module/plans/plans.service";
@@ -40,6 +41,15 @@ const PlansLayers = PlansLive.pipe(
   Layer.provide(DbLive),
 );
 
+const PlanGenerateRoutes = PlansGenerateLive.pipe(
+  Layer.provide(AuthLive),
+  Layer.provide(PlansServiceLive),
+  Layer.provide(PlansRepoLive),
+  Layer.provide(SessionsServiceLive),
+  Layer.provide(SessionsRepoLive),
+  Layer.provide(DbLive),
+);
+
 const Handlers = Layer.mergeAll(HealthLive, VideoGenerateLayers, PlansLayers);
 
 const AuthRoutes = AuthCatchallLive.pipe(Layer.provide(AuthLive), Layer.provide(DbLive));
@@ -50,7 +60,14 @@ const UploadRoutes = UploadLive.pipe(
   Layer.provide(R2Live),
 );
 
-const HttpRoutes = Layer.mergeAll(AuthRoutes, AsrLive, HttpApiLive, UploadRoutes, StaticLive);
+const HttpRoutes = Layer.mergeAll(
+  AuthRoutes,
+  AsrLive,
+  HttpApiLive,
+  UploadRoutes,
+  PlanGenerateRoutes,
+  StaticLive,
+);
 
 const AppLive = Layer.mergeAll(
   // NDJSON instead of JSON so streaming RPCs (SessionEventsWatch) can frame

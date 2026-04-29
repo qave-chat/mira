@@ -54,6 +54,9 @@ function SessionDetailRoute() {
   const plansResult = useAtomValue(
     RpcClient.query("PlanList", { sessionId }, { reactivityKeys: ["plans", sessionId] }),
   );
+  const refreshPlans = useAtomRefresh(
+    RpcClient.query("PlanList", { sessionId }, { reactivityKeys: ["plans", sessionId] }),
+  );
   const plans = AsyncResult.match(plansResult, {
     onInitial: () => [] satisfies ReadonlyArray<Plan>,
     onSuccess: (result) => result.value,
@@ -127,6 +130,11 @@ function SessionDetailRoute() {
     setVideoError("Sharing needs a persisted generated video id before it can be enabled.");
   }
 
+  function handlePlanCreated(planId: string) {
+    setSelectedPlanId(planId);
+    refreshPlans();
+  }
+
   return (
     <ModuleLayout>
       <ModuleLayoutHeader>
@@ -160,7 +168,7 @@ function SessionDetailRoute() {
         </ModuleLayoutActions>
       </ModuleLayoutHeader>
       <div className="min-h-0 w-full flex-1">
-        <SessionDetail />
+        <SessionDetail sessionId={sessionId} onPlanCreated={handlePlanCreated} />
       </div>
     </ModuleLayout>
   );
