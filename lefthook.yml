@@ -1,0 +1,15 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: format
+      glob: "*.{ts,tsx,js,jsx,json,md,yaml,yml}"
+      run: pnpm fmt {staged_files}
+      stage_fixed: true
+    - name: lint
+      glob: "*.{ts,tsx,js,jsx}"
+      run: pnpm lint {staged_files}
+
+pre-push:
+  jobs:
+    - name: typecheck
+      run: pnpm typecheck

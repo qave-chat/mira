@@ -1,0 +1,52 @@
+{
+  "$schema": "../../node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": ["../../tools/oxlint-effect/plugin.mjs"],
+  "ignorePatterns": ["scripts/**", "routeTree.gen.ts", ".storybook/**", "storybook-static/**"],
+  "overrides": [
+    {
+      "files": ["**/ui/**/*.ts", "**/ui/**/*.tsx"],
+      "rules": { "effect-local/require-ui-suffix": "error" }
+    },
+    {
+      "files": ["**/hook/**/*.ts", "**/hook/**/*.tsx"],
+      "rules": { "effect-local/require-hook-suffix": "error" }
+    },
+    {
+      "files": ["**/util/**/*.ts", "**/util/**/*.tsx"],
+      "rules": { "effect-local/require-util-suffix": "error" }
+    },
+    {
+      "files": ["**/*.ui.ts", "**/*.ui.tsx"],
+      "rules": {
+        "effect-local/require-companion-story": "error",
+        "effect-local/no-throw": "off",
+        "effect-local/no-json-parse": "off"
+      }
+    },
+    {
+      "files": ["**/*.hook.ts", "**/*.hook.tsx"],
+      "rules": {
+        "effect-local/hook-exports-use-prefix": "error",
+        "effect-local/require-companion-test": "error"
+      }
+    },
+    {
+      "files": ["**/*.util.ts", "**/*.util.tsx"],
+      "rules": {
+        "effect-local/util-exports-only-functions": "error",
+        "effect-local/util-test-covers-all-exports": "error",
+        "effect-local/require-companion-test": "error"
+      }
+    },
+    {
+      "files": ["**/*.route.tsx"],
+      "rules": {
+        "effect-local/require-companion-test": "error"
+      }
+    },
+    {
+      "files": ["**/*.atom.ts", "**/*.atom.tsx"],
+      "rules": { "effect-local/require-companion-test": "error" }
+    }
+  ]
+}

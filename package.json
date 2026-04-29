@@ -1,0 +1,37 @@
+{
+  "name": "@mira/mira",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm -r --parallel run dev",
+    "dev:emulate": "npx -y emulate",
+    "lint": "NODE_OPTIONS='--import tsx/esm' oxlint --format stylish --type-aware --type-check .",
+    "fmt": "oxfmt --write .",
+    "fmt:check": "oxfmt --check .",
+    "typecheck": "pnpm -r typecheck",
+    "prepare": "lefthook install || true"
+  },
+  "devDependencies": {
+    "@effect/language-service": "^0.85.1",
+    "@typescript/native-preview": "7.0.0-dev.20260423.1",
+    "effect": "beta",
+    "effect-oxlint": "^0.1.1",
+    "lefthook": "^2.1.6",
+    "oxfmt": "^0.45.0",
+    "oxlint": "^1.60.0",
+    "oxlint-tsgolint": "^0.21.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowAny": [
+        "effect",
+        "@effect/*"
+      ],
+      "allowedVersions": {}
+    }
+  }
+}

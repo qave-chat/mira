@@ -1,0 +1,44 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": ["./tools/oxlint-effect/plugin.mjs"],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "effect-local/no-throw": "error",
+    "effect-local/no-math-random": "error",
+    "effect-local/no-new-date": "error",
+    "effect-local/no-json-parse": "error",
+    "effect-local/require-effect-fn-handlers": "error",
+    "effect-local/tagged-error-name": "error",
+    "effect-local/prefer-pipe-catch": "error",
+    "effect-local/prefer-catch-tags": "error",
+    "effect-local/prefer-promise-try": "error",
+    "effect-local/prefer-promise-exit": "error",
+    "effect-local/no-atom-searchparam": "error",
+    "effect-local/atom-export-suffix": "error",
+    "effect-local/require-table-timestamp-defaults": "error"
+  },
+  "overrides": [
+    {
+      "files": ["apps/server-core/src/module/**/*.util.ts"],
+      "rules": {
+        "effect-local/util-exports-only-functions": "error",
+        "effect-local/util-test-covers-all-exports": "error",
+        "effect-local/util-export-object-params": "error",
+        "effect-local/require-companion-test": "error"
+      }
+    }
+  ],
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/drizzle/**",
+    "**/scripts/**",
+    "**/routeTree.gen.ts",
+    "**/.storybook/**",
+    "**/storybook-static/**",
+    "**/cdk.out/**",
+    "**/docs/effect/ai-docs/src/**"
+  ]
+}

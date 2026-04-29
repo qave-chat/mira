@@ -1,0 +1,32 @@
+{
+  "name": "@mira/server-core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./rpc": "./src/platform/rpc.contract.ts",
+    "./http": "./src/platform/http.contract.ts"
+  },
+  "scripts": {
+    "dev": "bun --watch src/main.ts",
+    "test": "bun --bun x vitest run",
+    "test:watch": "bun --bun x vitest",
+    "typecheck": "tsgo --noEmit"
+  },
+  "dependencies": {
+    "@effect/platform-bun": "4.0.0-beta.50",
+    "@effect/sql": "^0.51.1",
+    "@effect/sql-pg": "^0.52.1",
+    "@electric-sql/pglite": "^0.4.5",
+    "better-auth": "^1.6.9",
+    "drizzle-orm": "^0.45.2",
+    "effect": "beta",
+    "postgres": "^3.4.9"
+  },
+  "devDependencies": {
+    "@effect/vitest": "4.0.0-beta.50",
+    "@types/bun": "^1.2.0",
+    "@types/node": "^25.6.0",
+    "vitest": "^4.1.4"
+  }
+}

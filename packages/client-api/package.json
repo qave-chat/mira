@@ -1,0 +1,19 @@
+{
+  "name": "@mira/client-api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./http": "./src/http.ts",
+    "./http-atom": "./src/http-atom.ts",
+    "./rpc": "./src/rpc.ts",
+    "./rpc-atom": "./src/rpc-atom.ts"
+  },
+  "scripts": {
+    "typecheck": "tsgo --noEmit"
+  },
+  "dependencies": {
+    "@mira/server-core": "workspace:*",
+    "effect": "4.0.0-beta.50"
+  }
+}
