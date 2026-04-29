@@ -201,3 +201,22 @@
     line-height: 1.2;
   }
 }
+
+@layer components {
+  [data-slot="session-detail"][data-canvas-mode="navigate"] .react-flow__pane,
+  [data-slot="session-detail"][data-canvas-mode="navigate"] .react-flow__renderer,
+  [data-slot="session-detail"][data-canvas-mode="navigate"] .react-flow__viewport {
+    cursor: grab !important;
+  }
+
+  [data-slot="session-detail"][data-canvas-mode="navigate"] .react-flow__pane.dragging,
+  [data-slot="session-detail"][data-canvas-mode="navigate"] .react-flow__pane:active {
+    cursor: grabbing !important;
+  }
+
+  [data-slot="session-detail"][data-canvas-mode="select"] .react-flow__pane,
+  [data-slot="session-detail"][data-canvas-mode="select"] .react-flow__renderer,
+  [data-slot="session-detail"][data-canvas-mode="select"] .react-flow__viewport {
+    cursor: default !important;
+  }
+}

@@ -37,8 +37,6 @@ function LoginPage() {
           mouseForce={54}
           mouseRadius={150}
           denseParticles
-          adaptToTheme={false}
-          color="rgba(255, 255, 255, 0.42)"
           typingImpulseRef={particleImpulseRef}
         />
       </div>
