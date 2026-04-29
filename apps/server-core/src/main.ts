@@ -9,6 +9,7 @@ import { PlansServiceLive } from "./module/plans/plans.service";
 import { SessionsRepoLive } from "./module/sessions/sessions.repo";
 import { SessionsServiceLive } from "./module/sessions/sessions.service";
 import { VideoGenerateLive } from "./module/video-generate/video-generate.rpc.impl";
+import { VideoGenerateRepoLive } from "./module/video-generate/video-generate.repo";
 import { VideoGenerateRendererLive } from "./module/video-generate/video-generate.renderer";
 import { VideoGenerateServiceLive } from "./module/video-generate/video-generate.service";
 import { VideoGenerateWorkflowLive } from "./module/video-generate/video-generate.workflow";
@@ -25,8 +26,10 @@ import { WorkflowEngineOnlyLive } from "./platform/workflow.impl";
 
 const VideoGenerateLayers = Layer.mergeAll(VideoGenerateLive, VideoGenerateWorkflowLive).pipe(
   Layer.provide(VideoGenerateServiceLive),
+  Layer.provide(VideoGenerateRepoLive),
   Layer.provide(VideoGenerateRendererLive),
   Layer.provide(R2Live),
+  Layer.provide(DbLive),
   Layer.provide(WorkflowEngineOnlyLive),
 );
 

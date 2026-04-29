@@ -3,7 +3,6 @@ google:
     - client_id: local-client.apps.googleusercontent.com
       client_secret: GOCSPX-local-secret
       redirect_uris:
-        - http://localhost:4000/api/auth/oauth2/callback/google
         - http://localhost:38412/api/auth/oauth2/callback/google
         - http://localhost:47823/api/auth/oauth2/callback/google
   users:

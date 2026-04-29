@@ -2,6 +2,7 @@ import { Layer } from "effect";
 import { HttpApiBuilder, HttpApiScalar } from "effect/unstable/httpapi";
 import { HealthHttpHandlers } from "../module/health/health.http.impl";
 import { ShareHttpHandlers } from "../module/share/share.http.impl";
+import { ShareRepoLive } from "../module/share/share.repo";
 import { ShareServiceLive } from "../module/share/share.service";
 import { SessionsHttpHandlers } from "../module/sessions/sessions.http.impl";
 import { SessionsRepoLive } from "../module/sessions/sessions.repo";
@@ -18,7 +19,11 @@ const ApiRoutes = HttpApiBuilder.layer(HttpApiDef, {
     Layer.mergeAll(
       AuthHttpHandlers.pipe(Layer.provide(AuthLive), Layer.provide(DbLive)),
       HealthHttpHandlers,
-      ShareHttpHandlers.pipe(Layer.provide(ShareServiceLive)),
+      ShareHttpHandlers.pipe(
+        Layer.provide(ShareServiceLive),
+        Layer.provide(ShareRepoLive),
+        Layer.provide(DbLive),
+      ),
       SessionsHttpHandlers.pipe(
         Layer.provide(AuthLive),
         Layer.provide(SessionsServiceLive),

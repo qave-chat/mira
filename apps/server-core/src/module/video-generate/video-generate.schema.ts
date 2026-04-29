@@ -19,6 +19,16 @@ export const VideoGenerateWorkflowResult = Schema.Struct({
 });
 export type VideoGenerateWorkflowResult = typeof VideoGenerateWorkflowResult.Type;
 
+export const VideoGeneratePhase = Schema.Union([
+  Schema.Literal("queued"),
+  Schema.Literal("signing-photos"),
+  Schema.Literal("rendering"),
+  Schema.Literal("uploading"),
+  Schema.Literal("succeeded"),
+  Schema.Literal("failed"),
+]);
+export type VideoGeneratePhase = typeof VideoGeneratePhase.Type;
+
 export const VideoGenerateStartResult = Schema.Struct({
   executionId: Schema.String,
 });
@@ -33,8 +43,43 @@ export const VideoGenerateResult = Schema.Struct({
 export type VideoGenerateResult = typeof VideoGenerateResult.Type;
 
 export const VideoGenerateStatus = Schema.Union([
-  Schema.Struct({ status: Schema.Literal("running") }),
-  Schema.Struct({ status: Schema.Literal("succeeded"), result: VideoGenerateResult }),
-  Schema.Struct({ status: Schema.Literal("failed"), error: Schema.String }),
+  Schema.Struct({
+    status: Schema.Literal("running"),
+    phase: VideoGeneratePhase,
+    message: Schema.String,
+    progress: Schema.Number,
+  }),
+  Schema.Struct({
+    status: Schema.Literal("succeeded"),
+    phase: Schema.Literal("succeeded"),
+    message: Schema.String,
+    progress: Schema.Literal(100),
+    result: VideoGenerateResult,
+  }),
+  Schema.Struct({
+    status: Schema.Literal("failed"),
+    phase: Schema.Literal("failed"),
+    message: Schema.String,
+    progress: Schema.Number,
+    error: Schema.String,
+  }),
 ]);
 export type VideoGenerateStatus = typeof VideoGenerateStatus.Type;
+
+export type VideoGenerateExecutionRow = {
+  readonly id: string;
+  readonly executionId: string | null;
+  readonly prompt: string;
+  readonly status: "running" | "succeeded" | "failed";
+  readonly phase: VideoGeneratePhase;
+  readonly message: string;
+  readonly progress: number;
+  readonly videoKey: string | null;
+  readonly error: string | null;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+};
+
+export type VideoGenerateExecutionPatch = Partial<
+  Omit<VideoGenerateExecutionRow, "id" | "prompt" | "createdAt" | "updatedAt">
+>;

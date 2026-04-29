@@ -6,7 +6,9 @@ import postgres from "postgres";
 import { drizzle as drizzlePg } from "drizzle-orm/postgres-js";
 import { migrate as migratePg } from "drizzle-orm/postgres-js/migrator";
 import { plans } from "../module/plans/plans.table";
+import { generatedVideos, shareComments, shares } from "../module/share/share.table";
 import { sessions } from "../module/sessions/sessions.table";
+import { videoGenerateExecutions } from "../module/video-generate/video-generate.table";
 import { account, session, user, verification } from "./auth/auth.table";
 import { Db, ErrorDb, type DbService } from "./db.contract";
 import { DbSsl, DbUrlOptional } from "./db.config";
@@ -18,6 +20,10 @@ const schema = {
   verification,
   sessions,
   plans,
+  generatedVideos,
+  shares,
+  shareComments,
+  videoGenerateExecutions,
 };
 
 const migrationsFolder = path.resolve(

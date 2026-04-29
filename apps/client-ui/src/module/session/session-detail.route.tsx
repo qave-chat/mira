@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useAtomRefresh, useAtomSet, useAtomValue } from "@effect/atom-react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Cause, Exit } from "effect";
 import { AsyncResult } from "effect/unstable/reactivity";
 import type { Plan } from "@mira/server-core/rpc";
 import { HttpClient } from "@mira/client-api/http-atom";
 import { RpcClient } from "@mira/client-api/rpc-atom";
+import { createGeneratedVideo, createShare } from "@/module/share/share.api";
 import { PlanSelector } from "@/module/session/ui/plan-selector.ui";
 import { SessionDetail } from "@/module/session/ui/session-detail.ui";
 import {
@@ -32,8 +33,12 @@ export const Route = createFileRoute("/sessions/$sessionId")({
 function SessionDetailRoute() {
   const { sessionId } = Route.useParams();
   const { name } = Route.useSearch();
+  const navigate = useNavigate();
   const [videoExecutionId, setVideoExecutionId] = useState<string | undefined>();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [generatedVideoId, setGeneratedVideoId] = useState<string | undefined>();
+  const [shareId, setShareId] = useState<string | undefined>();
   const [isPlanSelectorExpanded, setIsPlanSelectorExpanded] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>();
   const [videoError, setVideoError] = useState<string | null>(null);
@@ -107,6 +112,8 @@ function SessionDetailRoute() {
     }
 
     setIsGenerating(true);
+    setGeneratedVideoId(undefined);
+    setShareId(undefined);
     setVideoError(null);
     const exit = await startVideoGenerate({
       payload: {
@@ -123,8 +130,27 @@ function SessionDetailRoute() {
     refreshVideoStatus();
   }
 
-  function shareVideo() {
-    setVideoError("Sharing needs a persisted generated video id before it can be enabled.");
+  async function shareVideo() {
+    if (!generatedVideoUrl) {
+      setVideoError("Generate a video before sharing.");
+      return;
+    }
+
+    setIsSharing(true);
+    setVideoError(null);
+    try {
+      const generatedVideo = generatedVideoId
+        ? { id: generatedVideoId }
+        : await createGeneratedVideo(generatedVideoUrl);
+      setGeneratedVideoId(generatedVideo.id);
+      const share = shareId ? { id: shareId } : await createShare(generatedVideo.id);
+      setShareId(share.id);
+      await navigate({ to: "/share/$shareId", params: { shareId: share.id } });
+    } catch (error) {
+      setVideoError(error instanceof Error ? error.message : "Share could not be created.");
+    } finally {
+      setIsSharing(false);
+    }
   }
 
   return (
@@ -148,9 +174,11 @@ function SessionDetailRoute() {
             isExpanded={isPlanSelectorExpanded}
             sessionName={sessionName ?? sessionId}
             generatedVideoUrl={generatedVideoUrl}
+            videoProgress={videoStatus?.progress}
+            videoMessage={videoStatus?.message}
             isGenerating={isGenerating || videoStatus?.status === "running"}
-            isSharing={false}
-            canShare={false}
+            isSharing={isSharing}
+            canShare={Boolean(generatedVideoUrl)}
             error={videoError}
             onExpandedChange={setIsPlanSelectorExpanded}
             onPlanSelect={setSelectedPlanId}

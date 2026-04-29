@@ -49,3 +49,31 @@ export const ShareWithComments = Schema.Struct({
   comments: Schema.Array(ShareComment),
 });
 export type ShareWithComments = typeof ShareWithComments.Type;
+
+export type GeneratedVideoRow = {
+  readonly id: string;
+  readonly sourceUrl: string;
+  readonly videoUrl: string;
+  readonly status: "ready";
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+};
+
+export type ShareRow = {
+  readonly id: string;
+  readonly generatedVideoId: string;
+  readonly sourceUrl: string;
+  readonly videoUrl: string;
+  readonly status: "ready";
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+};
+
+export type ShareCommentRow = {
+  readonly id: string;
+  readonly shareId: string;
+  readonly authorName: string;
+  readonly body: string;
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
+};

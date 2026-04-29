@@ -12,25 +12,29 @@ export const ShareHttpHandlers = HttpApiBuilder.group(
       .handle(
         "createGeneratedVideo",
         Effect.fn("HttpApi.share.createGeneratedVideo")(function* ({ payload }) {
-          return yield* service.createGeneratedVideo(payload);
+          return yield* service
+            .createGeneratedVideo(payload)
+            .pipe(Effect.catchTags({ ErrorDb: Effect.die }));
         }),
       )
       .handle(
         "create",
         Effect.fn("HttpApi.share.create")(function* ({ payload }) {
-          return yield* service.create(payload);
+          return yield* service.create(payload).pipe(Effect.catchTags({ ErrorDb: Effect.die }));
         }),
       )
       .handle(
         "get",
         Effect.fn("HttpApi.share.get")(function* ({ params }) {
-          return yield* service.get(params.shareId);
+          return yield* service.get(params.shareId).pipe(Effect.catchTags({ ErrorDb: Effect.die }));
         }),
       )
       .handle(
         "createComment",
         Effect.fn("HttpApi.share.createComment")(function* ({ params, payload }) {
-          return yield* service.createComment(params.shareId, payload);
+          return yield* service
+            .createComment(params.shareId, payload)
+            .pipe(Effect.catchTags({ ErrorDb: Effect.die }));
         }),
       );
   }),

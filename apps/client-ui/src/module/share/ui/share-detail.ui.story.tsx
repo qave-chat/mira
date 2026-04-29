@@ -13,6 +13,7 @@ const meta: Meta<typeof ShareDetail> = {
       status: "ready",
       createdAt: 1_777_000_000_000,
     },
+    sessionName: "Create a short product walkthrough video",
     comments: [
       {
         id: "comment-1",

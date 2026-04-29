@@ -5,6 +5,7 @@ import { Input } from "@/shared/ui/input.ui";
 
 export type ShareDetailProps = {
   share: Share;
+  sessionName?: string;
   comments: ReadonlyArray<ShareComment>;
   authorName: string;
   body: string;
@@ -17,6 +18,7 @@ export type ShareDetailProps = {
 
 export function ShareDetail({
   share,
+  sessionName = "Mira",
   comments,
   authorName,
   body,
@@ -38,7 +40,7 @@ export function ShareDetail({
               *
             </div>
             <div>
-              <p className="font-semibold leading-none">Mira</p>
+              <p className="font-semibold leading-none">{sessionName}</p>
               <p className="mt-1 text-xs text-muted-foreground">Public share</p>
             </div>
           </div>
@@ -60,13 +62,8 @@ export function ShareDetail({
               playsInline
             />
           </div>
-          <div className="space-y-2 border-t border-white/10 p-5 sm:p-6">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Source
-            </p>
-            <h1 className="break-words text-xl font-semibold tracking-tight sm:text-2xl">
-              {share.sourceUrl}
-            </h1>
+          <div className="border-t border-white/10 p-5 sm:p-6">
+            <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{sessionName}</h1>
           </div>
         </section>
 

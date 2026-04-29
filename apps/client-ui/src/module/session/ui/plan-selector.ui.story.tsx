@@ -36,6 +36,8 @@ const meta: Meta<typeof PlanSelector> = {
     selectedPlanId: plans[0]?.id,
     sessionName: "Launch walkthrough",
     generatedVideoUrl: undefined,
+    videoProgress: undefined,
+    videoMessage: undefined,
     isGenerating: false,
     isSharing: false,
     canShare: false,
@@ -71,6 +73,11 @@ export const Empty: Story = {
 
 export const ReadyToShare: Story = {
   args: { generatedVideoUrl: "https://example.com/video.mp4", canShare: true },
+  render: (args) => <ControlledPlanSelector {...args} defaultExpanded />,
+};
+
+export const Generating: Story = {
+  args: { isGenerating: true, videoProgress: 35, videoMessage: "Rendering video" },
   render: (args) => <ControlledPlanSelector {...args} defaultExpanded />,
 };
 

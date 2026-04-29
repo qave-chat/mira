@@ -1,7 +1,6 @@
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import type { Plan } from "@mira/server-core/rpc";
 import { Button } from "@/shared/ui/button.ui";
-import { cn } from "@/shared/util/cn.util";
 
 export type PlanSelectorProps = {
   plans: ReadonlyArray<Plan>;
@@ -9,6 +8,8 @@ export type PlanSelectorProps = {
   isExpanded: boolean;
   sessionName: string;
   generatedVideoUrl?: string;
+  videoProgress?: number;
+  videoMessage?: string;
   isGenerating: boolean;
   isSharing: boolean;
   canShare: boolean;
@@ -25,6 +26,8 @@ export function PlanSelector({
   isExpanded,
   sessionName,
   generatedVideoUrl,
+  videoProgress,
+  videoMessage,
   isGenerating,
   isSharing,
   canShare,
@@ -81,33 +84,38 @@ export function PlanSelector({
 
           <div className="max-h-[calc(100vh-9rem)] space-y-4 overflow-auto p-4">
             {plans.length > 0 ? (
-              <div data-slot="plan-selector-list" className="grid gap-2 sm:grid-cols-2">
-                {plans.map((plan) => {
-                  const isSelected = plan.id === selectedPlan?.id;
-                  return (
-                    <button
-                      key={plan.id}
-                      type="button"
-                      data-slot="plan-selector-option"
-                      data-selected={isSelected ? "true" : undefined}
-                      className={cn(
-                        "rounded-lg border border-transparent px-3 py-2.5 text-left transition-colors hover:bg-muted/70",
-                        isSelected && "border-primary/30 bg-primary/10",
-                      )}
-                      onClick={() => onPlanSelect(plan.id)}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="truncate text-sm font-medium">{formatPlanLabel(plan)}</p>
-                        <span className="shrink-0 text-[0.7rem] text-muted-foreground">
-                          {plan.exploration.length} refs
-                        </span>
-                      </div>
-                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                        {plan.intent}
-                      </p>
-                    </button>
-                  );
-                })}
+              <div data-slot="plan-selector-list" className="space-y-2">
+                <label
+                  data-slot="plan-selector-label"
+                  className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground"
+                  htmlFor="plan-selector-select"
+                >
+                  Select plan
+                </label>
+                <select
+                  id="plan-selector-select"
+                  data-slot="plan-selector-select"
+                  className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  value={selectedPlan?.id ?? ""}
+                  onChange={(event) => onPlanSelect(event.currentTarget.value)}
+                >
+                  {plans.map((plan) => (
+                    <option key={plan.id} value={plan.id}>
+                      {formatPlanLabel(plan)} - {plan.exploration.length} refs
+                    </option>
+                  ))}
+                </select>
+                {selectedPlan ? (
+                  <div
+                    data-slot="plan-selector-selected-summary"
+                    className="rounded-lg border bg-muted/20 p-3"
+                  >
+                    <p className="text-sm font-medium">{formatPlanLabel(selectedPlan)}</p>
+                    <p className="mt-1 line-clamp-3 text-xs leading-5 text-muted-foreground">
+                      {selectedPlan.intent}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             ) : (
               <p className="rounded-lg border border-dashed bg-muted/20 px-3 py-6 text-center text-sm text-muted-foreground">
@@ -143,12 +151,27 @@ export function PlanSelector({
                   className="rounded-xl border border-dashed bg-muted/20 p-6 text-sm text-muted-foreground"
                 >
                   {isGenerating
-                    ? "Generating video..."
+                    ? (videoMessage ?? "Generating video...")
                     : selectedPlan
                       ? "Generate a video from this plan."
                       : "Select a plan before generating video."}
                 </div>
               )}
+
+              {isGenerating ? (
+                <div data-slot="session-video-progress" className="space-y-2">
+                  <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div
+                      data-slot="session-video-progress-bar"
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${Math.max(0, Math.min(100, videoProgress ?? 0))}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {videoMessage ?? "Generating video..."}
+                  </p>
+                </div>
+              ) : null}
 
               <div className="grid gap-2 sm:grid-cols-2">
                 <Button
