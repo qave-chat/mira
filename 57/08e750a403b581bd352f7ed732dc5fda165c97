@@ -1,0 +1,68 @@
+apps/client-ui/src/routeTree.gen.ts
+  735c058a88a6bf0b 12,15,17-22,33-36,43-44,49-50,56-57,61,63-64,70-71,76-82,97-101,110-112
+apps/client-ui/src/module/session/session.route.tsx
+  150c7efd45674b2b 9-10,13,17,21,23,26-27,30
+apps/server-core/package.json
+  3b44db7fd407eede 31
+apps/server-core/src/module/health/health.http.impl.ts
+  735c058a88a6bf0b 5-7,9-10
+apps/client-ui/src/module/auth/ui/particle-field.ui.tsx
+  735c058a88a6bf0b 306
+apps/client-ui/src/module/session/session-detail.route.tsx
+  150c7efd45674b2b 9-10,13-14,19,23,25
+apps/client-ui/src/app.route.tsx
+  150c7efd45674b2b 4,93-96
+apps/server-core/src/platform/sql.impl.ts
+  735c058a88a6bf0b 4
+apps/client-ui/src/routes.ts
+  150c7efd45674b2b 5-6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "5708e750a403b581bd352f7ed732dc5fda165c97",
+  "prompts": {
+    "150c7efd45674b2b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_22969d8d1ffe1QF13FGILBB9bQ",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 230,
+      "total_deletions": 74,
+      "accepted_lines": 74,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/b2688e0b043aec254b5e523d095eee4f90de440a50ef6cb04d8407d37f76bcf1"
+    },
+    "3b44db7fd407eede": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_22960a842ffe3zNtq9bFGh5FD7",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 51,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 50,
+      "messages_url": "https://usegitai.com/cas/11f60af1b99c980fec3d9303debec429c310ad39849f002facdd3d3562516899"
+    },
+    "735c058a88a6bf0b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2295c34cafferm3Arfoo603y4t",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 45,
+      "total_deletions": 2680,
+      "accepted_lines": 45,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/9f1ca3178799ebebc2c31443d31c29c54114296a5ed9009ca804dc20a0b85d4e"
+    }
+  }
+}
