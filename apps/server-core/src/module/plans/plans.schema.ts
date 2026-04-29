@@ -33,6 +33,13 @@ export const PlanCreatePayload = Schema.Struct({
 });
 export type PlanCreatePayload = typeof PlanCreatePayload.Type;
 
+export const PlanUpdatePayload = Schema.Struct({
+  id: Schema.String,
+  exploration: Schema.Array(PlanExplorationItem),
+  links: Schema.Array(PlanLink),
+});
+export type PlanUpdatePayload = typeof PlanUpdatePayload.Type;
+
 export type PlanRow = {
   readonly id: string;
   readonly sessionId: string;
@@ -45,3 +52,4 @@ export type PlanRow = {
 };
 
 export type PlanInsertRow = Omit<PlanRow, "createdAt" | "updatedAt">;
+export type PlanUpdateRow = Pick<PlanRow, "exploration" | "links">;

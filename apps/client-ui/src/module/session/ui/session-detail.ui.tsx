@@ -7,16 +7,24 @@ import {
   MiniMap,
   type Node,
   type NodeProps,
+  Panel,
   type ReactFlowInstance,
   ReactFlow,
   MarkerType,
   Position,
+  SelectionMode,
   useEdgesState,
   useNodesState,
   useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { AudioLinesIcon, PaperclipIcon, SendIcon } from "lucide-react";
+import {
+  AudioLinesIcon,
+  MousePointer2Icon,
+  NavigationIcon,
+  PaperclipIcon,
+  SendIcon,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { SessionImagePreviewDialog } from "@/module/session/ui/session-image-preview-dialog.ui";
 import { useTheme } from "@/shared/provider/theme.provider";
@@ -86,6 +94,7 @@ const PLAN_NODE_START_X = 120;
 const PLAN_NODE_START_Y = 120;
 const PLAN_NODE_GAP_X = 460;
 const PLAN_NODE_STAGGER_Y = 48;
+const PLAN_ROW_GAP_Y = 360;
 
 type WelcomeNodeData = {
   label: string;
@@ -98,6 +107,7 @@ type WelcomeNodeData = {
 type WelcomeNodeType = Node<WelcomeNodeData, "welcome">;
 type PlaceholderNodeType = Node<WelcomeNodeData, "placeholder">;
 type SessionNode = PlaceholderNodeType | WelcomeNodeType;
+type CanvasMode = "navigate" | "select";
 
 function WelcomeNode({ id, data }: NodeProps<SessionNode>) {
   const { deleteElements } = useReactFlow<SessionNode, Edge>();
@@ -181,11 +191,19 @@ type ContextMenuPosition = {
 
 export type SessionDetailProps = {
   plan?: GeneratedPlan;
+  plans?: ReadonlyArray<GeneratedPlan>;
   sessionId: string;
   onPlanCreated?: (planId: string) => void;
+  onPlanUpdated?: (plan: Pick<GeneratedPlan, "id" | "exploration" | "links">) => Promise<void>;
 };
 
-export function SessionDetail({ plan, sessionId, onPlanCreated }: SessionDetailProps) {
+export function SessionDetail({
+  plan,
+  plans = [],
+  sessionId,
+  onPlanCreated,
+  onPlanUpdated,
+}: SessionDetailProps) {
   const { resolvedTheme } = useTheme();
   const [nodes, setNodes, onNodesChange] = useNodesState<SessionNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
@@ -201,9 +219,11 @@ export function SessionDetail({ plan, sessionId, onPlanCreated }: SessionDetailP
   const [isCreatingPlan, setIsCreatingPlan] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [planError, setPlanError] = useState<string | null>(null);
+  const [planPersistError, setPlanPersistError] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isConnectingAsr, setIsConnectingAsr] = useState(false);
   const [asrError, setAsrError] = useState<string | null>(null);
+  const [canvasMode, setCanvasMode] = useState<CanvasMode>("navigate");
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -216,10 +236,15 @@ export function SessionDetail({ plan, sessionId, onPlanCreated }: SessionDetailP
   const canGeneratePlan = displayedPrompt.trim().length > 0 || attachments.length > 0;
 
   useEffect(() => {
-    if (plan) {
-      renderPlan(plan, attachments);
+    if (plans.length > 0) {
+      renderPlans(plans, attachments);
+      return;
     }
-  }, [plan?.id]);
+
+    if (plan) {
+      renderPlans([plan], attachments);
+    }
+  }, [plan?.id, plans]);
 
   useEffect(() => {
     return () => {
@@ -262,6 +287,50 @@ export function SessionDetail({ plan, sessionId, onPlanCreated }: SessionDetailP
 
     setNodes((currentNodes) => [...currentNodes, newNode]);
     closeContextMenu();
+  }
+
+  function persistDeletedNodes(deletedNodes: SessionNode[]) {
+    if (!onPlanUpdated) {
+      return;
+    }
+
+    const deletedStepIndexesByPlanId = new Map<string, Set<number>>();
+    for (const node of deletedNodes) {
+      const parsed = parsePlanStepNodeId(node.id);
+      if (!parsed) {
+        continue;
+      }
+
+      const deletedStepIndexes = deletedStepIndexesByPlanId.get(parsed.planId) ?? new Set<number>();
+      deletedStepIndexes.add(parsed.stepIndex);
+      deletedStepIndexesByPlanId.set(parsed.planId, deletedStepIndexes);
+    }
+
+    if (deletedStepIndexesByPlanId.size === 0) {
+      return;
+    }
+
+    setPlanPersistError(null);
+    for (const [planId, deletedStepIndexes] of deletedStepIndexesByPlanId) {
+      const deletedPlan = plans.find((item) => item.id === planId);
+      if (!deletedPlan) {
+        continue;
+      }
+
+      const exploration = deletedPlan.exploration.filter(
+        (_, index) => !deletedStepIndexes.has(index),
+      );
+      void onPlanUpdated({
+        id: deletedPlan.id,
+        exploration,
+        links: createSequentialLinks(exploration.length),
+      }).catch((error: unknown) => {
+        setPlanPersistError(
+          error instanceof Error ? error.message : "Could not persist deleted nodes.",
+        );
+        renderPlans(plans, attachments);
+      });
+    }
   }
 
   async function uploadImages(files: File[]) {
@@ -491,7 +560,10 @@ export function SessionDetail({ plan, sessionId, onPlanCreated }: SessionDetailP
       if (!response.ok || !result.plan) {
         throw new Error(result.error ?? "Plan generation failed");
       }
-      renderPlan(result.plan, attachments);
+      renderPlans(
+        [result.plan, ...plans.filter((existingPlan) => existingPlan.id !== result.plan?.id)],
+        attachments,
+      );
       setWorkflowPrompt("");
       setRealtimeDraft("");
       realtimeDraftRef.current = "";
@@ -503,41 +575,48 @@ export function SessionDetail({ plan, sessionId, onPlanCreated }: SessionDetailP
     }
   }
 
-  function renderPlan(
-    plan: GeneratedPlan,
+  function renderPlans(
+    renderedPlans: ReadonlyArray<GeneratedPlan>,
     currentAttachments: ReadonlyArray<WorkflowImageAttachment>,
   ) {
     const attachmentByKey = new Map(
       currentAttachments.map((attachment) => [attachment.key, attachment]),
     );
-    const planNodes: SessionNode[] = plan.exploration.map((item, index) => ({
-      id: `step-${index + 1}`,
-      type: "placeholder",
-      position: {
-        x: PLAN_NODE_START_X + index * PLAN_NODE_GAP_X,
-        y: PLAN_NODE_START_Y + (index % 2) * PLAN_NODE_STAGGER_Y,
-      },
-      data: {
-        label: `Step ${index + 1}`,
-        reason: item.reason,
-        screenshotUrl: item.screenshotUrl ?? attachmentByKey.get(item.screenshot)?.url,
-      },
-    }));
+    const planNodes: SessionNode[] = renderedPlans.flatMap((renderedPlan, planIndex) =>
+      renderedPlan.exploration.map((item, stepIndex) => ({
+        id: getPlanStepNodeId(renderedPlan.id, stepIndex),
+        type: "placeholder" as const,
+        position: {
+          x: PLAN_NODE_START_X + stepIndex * PLAN_NODE_GAP_X,
+          y: PLAN_NODE_START_Y + planIndex * PLAN_ROW_GAP_Y + (stepIndex % 2) * PLAN_NODE_STAGGER_Y,
+        },
+        data: {
+          label: `Plan ${planIndex + 1} · Step ${stepIndex + 1}`,
+          reason: item.reason,
+          screenshotUrl: item.screenshotUrl ?? attachmentByKey.get(item.screenshot)?.url,
+        },
+      })),
+    );
     const planNodeIds = new Set(planNodes.map((node) => node.id));
-    const links =
-      plan.links.length > 0 ? plan.links : createSequentialLinks(plan.exploration.length);
-    const planEdges: Edge[] = links.flatMap((link, index) =>
-      planNodeIds.has(link.from) && planNodeIds.has(link.to)
-        ? [
-            {
-              id: `plan-${plan.id}-edge-${index}`,
-              source: link.from,
-              target: link.to,
-              markerEnd: { type: MarkerType.ArrowClosed },
-              style: { stroke: "var(--foreground)", strokeWidth: 2 },
-            },
-          ]
-        : [],
+    const planEdges: Edge[] = renderedPlans.flatMap((renderedPlan) =>
+      (renderedPlan.links.length > 0
+        ? renderedPlan.links
+        : createSequentialLinks(renderedPlan.exploration.length)
+      ).flatMap((link, index) => {
+        const source = getPersistedStepNodeId(renderedPlan.id, link.from);
+        const target = getPersistedStepNodeId(renderedPlan.id, link.to);
+        return planNodeIds.has(source) && planNodeIds.has(target)
+          ? [
+              {
+                id: `plan-${renderedPlan.id}-edge-${index}`,
+                source,
+                target,
+                markerEnd: { type: MarkerType.ArrowClosed },
+                style: { stroke: "var(--foreground)", strokeWidth: 2 },
+              },
+            ]
+          : [];
+      }),
     );
     setNodes(planNodes);
     setEdges(planEdges);
@@ -553,12 +632,17 @@ export function SessionDetail({ plan, sessionId, onPlanCreated }: SessionDetailP
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onNodesDelete={persistDeletedNodes}
         onInit={setReactFlowInstance}
         nodeTypes={nodeTypes}
         defaultViewport={{ x: 48, y: 48, zoom: 1 }}
         minZoom={0.2}
         maxZoom={2.5}
-        panOnDrag
+        panOnDrag={canvasMode === "navigate"}
+        selectionOnDrag={canvasMode === "select"}
+        selectionMode={SelectionMode.Partial}
+        multiSelectionKeyCode={null}
+        deleteKeyCode={["Backspace", "Delete"]}
         onPaneClick={closeContextMenu}
         onPaneContextMenu={openContextMenu}
         zoomOnDoubleClick
@@ -581,6 +665,30 @@ export function SessionDetail({ plan, sessionId, onPlanCreated }: SessionDetailP
           maskStrokeColor="var(--border)"
           maskStrokeWidth={1}
         />
+        <Panel position="top-left">
+          <div className="flex overflow-hidden rounded-xl border border-border bg-background/95 p-1 shadow-lg shadow-black/10 ring-1 ring-foreground/10 backdrop-blur">
+            <Button
+              type="button"
+              variant={canvasMode === "navigate" ? "secondary" : "ghost"}
+              size="sm"
+              aria-pressed={canvasMode === "navigate"}
+              onClick={() => setCanvasMode("navigate")}
+            >
+              <NavigationIcon />
+              Nav
+            </Button>
+            <Button
+              type="button"
+              variant={canvasMode === "select" ? "secondary" : "ghost"}
+              size="sm"
+              aria-pressed={canvasMode === "select"}
+              onClick={() => setCanvasMode("select")}
+            >
+              <MousePointer2Icon />
+              Select
+            </Button>
+          </div>
+        </Panel>
       </ReactFlow>
 
       <form
@@ -645,6 +753,9 @@ export function SessionDetail({ plan, sessionId, onPlanCreated }: SessionDetailP
           <p className="mt-2 text-xs text-muted-foreground">Creating plan...</p>
         ) : null}
         {planError ? <p className="mt-2 text-xs text-destructive">{planError}</p> : null}
+        {planPersistError ? (
+          <p className="mt-2 text-xs text-destructive">{planPersistError}</p>
+        ) : null}
         {asrError ? <p className="mt-2 text-xs text-destructive">{asrError}</p> : null}
         <div className="mt-3 flex items-center justify-between gap-3">
           <div className="flex shrink-0 items-center gap-2">
@@ -765,6 +876,26 @@ function createSequentialLinks(count: number) {
     from: `step-${index + 1}`,
     to: `step-${index + 2}`,
   }));
+}
+
+function getPlanStepNodeId(planId: string, stepIndex: number) {
+  return `${planId}-step-${stepIndex + 1}`;
+}
+
+function getPersistedStepNodeId(planId: string, stepId: string) {
+  return `${planId}-${stepId}`;
+}
+
+function parsePlanStepNodeId(nodeId: string) {
+  const match = /^(.*)-step-(\d+)$/.exec(nodeId);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    planId: match[1],
+    stepIndex: Number(match[2]) - 1,
+  };
 }
 
 async function readUploadError(response: Response) {

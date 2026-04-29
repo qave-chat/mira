@@ -55,6 +55,14 @@ export const PlansLive = PlanRpcs.toLayer(
           .pipe(Effect.catchTags({ ErrorDb: Effect.die }));
         return yield* withScreenshotUrls(plan);
       }),
+      PlanUpdate: Effect.fn("Rpc.PlanUpdate")(function* (input, { headers }) {
+        const userId = yield* requireCurrentRpcUserId(headers);
+        yield* Effect.annotateCurrentSpan({ "plan.id": input.id });
+        const plan = yield* service
+          .update({ ...input, userId })
+          .pipe(Effect.catchTags({ ErrorDb: Effect.die }));
+        return yield* withScreenshotUrls(plan);
+      }),
     };
   }),
 );
