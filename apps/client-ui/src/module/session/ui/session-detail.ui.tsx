@@ -14,7 +14,7 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { AudioLinesIcon, SendIcon } from "lucide-react";
+import { AudioLinesIcon, PaperclipIcon, SendIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { SessionImagePreviewDialog } from "@/module/session/ui/session-image-preview-dialog.ui";
 import { useTheme } from "@/shared/provider/theme.provider";
@@ -95,11 +95,11 @@ function WelcomeNode({ id, data }: NodeProps<SessionNode>) {
   }
 
   return (
-    <div className="relative min-w-64 rounded-xl border border-[#c9a96b] bg-[#f0e0bd] p-5 pr-12 text-[#141413] shadow-xl shadow-black/30 ring-2 ring-[#c9a96b]/40">
+    <div className="relative min-w-64 rounded-xl border border-neutral-300 bg-neutral-100 p-5 pr-12 text-neutral-950 shadow-xl shadow-black/15 ring-1 ring-black/5 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:shadow-black/35 dark:ring-white/5">
       <button
         type="button"
         aria-label="Delete welcome node"
-        className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-md text-[#141413]/70 hover:bg-[#141413]/10 hover:text-[#141413]"
+        className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-200 hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-50"
         onClick={deleteNode}
       >
         x
@@ -109,7 +109,7 @@ function WelcomeNode({ id, data }: NodeProps<SessionNode>) {
         <img
           src={data.screenshotUrl}
           alt="Workflow step screenshot"
-          className="mt-3 h-32 w-full rounded-lg border border-[#141413]/10 object-cover"
+          className="mt-3 h-32 w-full rounded-lg border border-neutral-300 object-cover dark:border-neutral-700"
         />
       ) : null}
       {data.reason ? <p className="mt-3 max-w-72 text-sm leading-5">{data.reason}</p> : null}
@@ -489,7 +489,7 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
   return (
     <section
       data-slot="session-detail"
-      className="relative h-full min-h-0 w-full overflow-hidden bg-[#090909] text-card-foreground"
+      className="relative h-full min-h-0 w-full overflow-hidden bg-background text-card-foreground"
     >
       <ReactFlow
         nodes={nodes}
@@ -514,7 +514,7 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
           variant={BackgroundVariant.Dots}
           gap={24}
           size={3}
-          color="rgba(158, 180, 216, 0.55)"
+          color={resolvedTheme === "dark" ? "rgba(158, 180, 216, 0.55)" : "rgba(82, 82, 91, 0.28)"}
         />
         <Controls showInteractive position="bottom-left" />
         <MiniMap
@@ -592,13 +592,22 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
         <div className="mt-3 flex items-center justify-between gap-3">
           <div className="flex shrink-0 items-center gap-2">
             <input
+              id="workflow-image-upload"
               type="file"
               accept="image/*"
               multiple
               disabled={isUploadingImages}
-              className="max-w-48 cursor-pointer rounded-lg border border-border bg-background text-sm text-muted-foreground file:mr-3 file:h-9 file:cursor-pointer file:border-0 file:border-r file:border-border file:bg-muted file:px-3 file:text-sm file:font-medium file:text-foreground hover:file:bg-muted/80 disabled:pointer-events-none disabled:opacity-50"
+              className="sr-only"
               onChange={attachImages}
             />
+            <label
+              htmlFor="workflow-image-upload"
+              aria-label="Attach images"
+              aria-disabled={isUploadingImages}
+              className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-background text-sm font-medium transition-all outline-none select-none hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-disabled:pointer-events-none aria-disabled:opacity-50 dark:border-input dark:bg-input/30 dark:hover:bg-input/50 [&_svg]:size-4"
+            >
+              <PaperclipIcon />
+            </label>
             <Button
               type="button"
               variant={isRecording ? "default" : "outline"}

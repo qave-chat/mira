@@ -21,6 +21,16 @@ type GeneratedPlan = {
   }>;
 };
 
+type OpenAiResponse = {
+  readonly output_text?: string;
+  readonly output?: ReadonlyArray<{
+    readonly content?: ReadonlyArray<{
+      readonly text?: string;
+      readonly type?: string;
+    }>;
+  }>;
+};
+
 const json = (value: unknown) => {
   // oxlint-disable-next-line effect-local/no-json-parse -- OpenAI HTTP APIs require JSON request bodies.
   return JSON.stringify(value);
@@ -71,12 +81,6 @@ export const PlansGenerateLive = HttpRouter.use((router) =>
           Response.json({ error: "Session id is required" }, { status: 400 }),
         );
       }
-      if (screenshots.length === 0) {
-        return HttpServerResponse.fromWeb(
-          Response.json({ error: "At least one screenshot is required" }, { status: 400 }),
-        );
-      }
-
       const response = yield* Effect.tryPromise({
         try: () =>
           fetch(OPENAI_RESPONSES_URL, {
@@ -118,10 +122,27 @@ export const PlansGenerateLive = HttpRouter.use((router) =>
       }
 
       const openai = yield* Effect.tryPromise({
-        try: () => response.json() as Promise<{ output_text?: string }>,
+        try: () => response.json() as Promise<OpenAiResponse>,
         catch: (cause) => cause,
       });
-      const generated = yield* decodeGeneratedPlan(openai.output_text ?? "");
+      const outputText = extractOutputText(openai);
+      if (outputText.length === 0) {
+        yield* Effect.logWarning("OpenAI plan generation returned no text output");
+        return HttpServerResponse.fromWeb(
+          Response.json({ error: "Plan generation returned no output" }, { status: 502 }),
+        );
+      }
+
+      const generated = yield* decodeGeneratedPlan(outputText).pipe(
+        Effect.catch(() =>
+          Effect.succeed({
+            intent,
+            exploration: screenshots.map((_, index) => ({
+              reason: `Demonstrate workflow step ${index + 1}.`,
+            })),
+          } satisfies GeneratedPlan),
+        ),
+      );
       const plan = yield* service
         .create({
           sessionId,
@@ -153,8 +174,27 @@ function decodeGeneratedPlan(text: string) {
   });
 }
 
+function extractOutputText(response: OpenAiResponse) {
+  if (typeof response.output_text === "string") {
+    return response.output_text.trim();
+  }
+
+  return (response.output ?? [])
+    .flatMap((item) => item.content ?? [])
+    .map((content) => content.text ?? "")
+    .join("\n")
+    .trim();
+}
+
 function normalizeExploration(plan: GeneratedPlan, screenshots: ReadonlyArray<UploadedScreenshot>) {
   const items = plan.exploration ?? [];
+  if (screenshots.length === 0) {
+    return items.map((item, index) => ({
+      screenshot: "",
+      reason: item.reason?.trim() || `Demonstrate workflow step ${index + 1}.`,
+    }));
+  }
+
   return screenshots.map((screenshot, index) => ({
     screenshot: screenshot.key,
     reason:
