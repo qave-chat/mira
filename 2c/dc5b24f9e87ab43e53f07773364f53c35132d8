@@ -1,0 +1,68 @@
+apps/server-core/src/module/video-generate/video-generate.renderer.ts
+  3112cee9b6566141 41-56,58-63
+apps/client-ui/src/module/session/session-detail.route.tsx
+  3112cee9b6566141 127,221-251
+apps/server-core/src/module/video-generate/remotion/slideshow.tsx
+  b7506d1966c01174 131,171,191,203
+  3112cee9b6566141 1,4-30,33-36,39-45,48-56,58-60,62-66,69-107,109-111,114-130,133-139,144-145,147-148,150-151,153-156,158-170,172-174,177-180,183-186,188-190,192-202,204-227,229-470
+apps/server-core/src/module/video-generate/remotion/root.tsx
+  3112cee9b6566141 2,12-13,16
+README.md
+  c1f1452585ab4129 1-160
+apps/server-core/src/module/video-generate/video-generate.service.ts
+  3112cee9b6566141 34,36,53
+apps/server-core/src/module/video-generate/video-generate.schema.ts
+  3112cee9b6566141 5-11,18-24
+apps/server-core/src/module/video-generate/video-generate.workflow.ts
+  b7506d1966c01174 227-236,270-271,273,275,278,281,295-303
+  3112cee9b6566141 1,9-43,63-65,68,77-84,86-96,98-102,111-117,147-226,237-269,272,274,276-277,279-280,282-294,304-424
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "2cdc5b24f9e87ab43e53f07773364f53c35132d8",
+  "prompts": {
+    "3112cee9b6566141": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_22898a242ffeGX8uevekZOWTCA",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 1635,
+      "total_deletions": 884,
+      "accepted_lines": 861,
+      "overriden_lines": 6,
+      "messages_url": "https://usegitai.com/cas/7aa25a50a8fce058eebada18b3741b35d01d1b971daf7b339437a6bd158ba197"
+    },
+    "b7506d1966c01174": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2284622b7ffe8rcyehcz7Kmv4x",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 21,
+      "accepted_lines": 29,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/7c2022d79c0405e826d2287c366d2137b05c292ec2ade9916248fc8f21b2de67"
+    },
+    "c1f1452585ab4129": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2284573e1ffeVkps3hKPE5fTL1",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 160,
+      "total_deletions": 0,
+      "accepted_lines": 160,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/8e10082254d59bacc90d47c0310808b05d2804dc6ce94026c00b7cc0482b6ea9"
+    }
+  }
+}
