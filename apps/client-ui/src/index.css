@@ -100,7 +100,7 @@
   --secondary-foreground: var(--text-dim);
   --muted: var(--bg-elev-2);
   --muted-foreground: var(--text-mute);
-  --accent-foreground: var(--accent);
+  --accent-foreground: var(--bg);
   --destructive: var(--fail);
   --border: var(--line);
   --input: var(--line);
@@ -126,7 +126,7 @@
   --bg-rail: #0a0a0b;
   --bg-elev-1: #141415;
   --bg-elev-2: rgba(255, 255, 255, 0.04);
-  --bg-select: rgba(158, 180, 216, 0.06);
+  --bg-select: rgba(158, 180, 216, 0.14);
   --line: rgba(255, 255, 255, 0.08);
   --line-soft: rgba(255, 255, 255, 0.04);
   --text: #e8e6df;
@@ -156,7 +156,7 @@
   --secondary-foreground: var(--text);
   --muted: var(--bg-elev-2);
   --muted-foreground: var(--text-dim);
-  --accent-foreground: var(--accent);
+  --accent-foreground: var(--bg);
   --destructive: var(--fail);
   --border: var(--line);
   --input: var(--line);

@@ -16,9 +16,14 @@ export interface R2SignGetObjectInput {
   readonly expiresInSeconds: number;
 }
 
+export interface R2DeleteObjectInput {
+  readonly key: string;
+}
+
 export interface R2Service {
   readonly putObject: (input: R2PutObjectInput) => Effect.Effect<void, ErrorR2>;
   readonly signGetObject: (input: R2SignGetObjectInput) => Effect.Effect<string, ErrorR2>;
+  readonly deleteObject: (input: R2DeleteObjectInput) => Effect.Effect<void, ErrorR2>;
 }
 
 export class R2 extends Context.Service<R2, R2Service>()("platform/R2") {}

@@ -23,7 +23,7 @@ const sessions: ReadonlyArray<SessionListItem> = [
 const meta: Meta<typeof SessionList> = {
   title: "Module/Session/SessionList",
   component: SessionList,
-  args: { sessions },
+  args: { sessions, onDelete: () => undefined },
   decorators: [
     (Story) => (
       <div className="min-h-svh bg-background p-6">
@@ -41,4 +41,8 @@ export const Populated: Story = {};
 
 export const Empty: Story = {
   args: { sessions: [] },
+};
+
+export const Deleting: Story = {
+  args: { deletingSessionId: sessions[0]?.id },
 };

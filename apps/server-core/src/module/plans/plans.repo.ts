@@ -30,6 +30,12 @@ export class PlansRepo extends Context.Service<PlansRepo>()("module/PlansRepo", 
         );
         return rows[0];
       }),
+      deleteBySessionId: Effect.fn("PlansRepo.deleteBySessionId")(function* (sessionId: string) {
+        yield* Effect.annotateCurrentSpan({ "session.id": sessionId });
+        return yield* db.query((d) =>
+          d.delete(plans).where(eq(plans.sessionId, sessionId)).returning(),
+        );
+      }),
     } as const;
   }),
 }) {}

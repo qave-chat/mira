@@ -28,6 +28,9 @@ export function ShareDetail({
   onBodyChange,
   onCommentSubmit,
 }: ShareDetailProps) {
+  const sharedAt = formatShareDate(share.createdAt);
+  const bodyLength = body.length;
+
   return (
     <main
       data-slot="share-detail"
@@ -41,12 +44,22 @@ export function ShareDetail({
             </div>
             <div>
               <p className="font-semibold leading-none">{sessionName}</p>
-              <p className="mt-1 text-xs text-muted-foreground">Public share</p>
+              <p className="mt-1 text-xs text-muted-foreground">Public share · {sharedAt}</p>
             </div>
           </div>
-          <p className="hidden rounded-full border bg-background/60 px-3 py-1 text-xs text-muted-foreground sm:block">
-            Shared video
-          </p>
+          <div className="hidden items-center gap-2 sm:flex">
+            <a
+              className="rounded-full border bg-background/60 px-3 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              href={share.sourceUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              Source video
+            </a>
+            <p className="rounded-full border bg-background/60 px-3 py-1 text-xs text-muted-foreground">
+              Shared video
+            </p>
+          </div>
         </header>
 
         <section
@@ -64,6 +77,7 @@ export function ShareDetail({
           </div>
           <div className="border-t border-white/10 p-5 sm:p-6">
             <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{sessionName}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Shared for review on {sharedAt}</p>
           </div>
         </section>
 
@@ -88,6 +102,9 @@ export function ShareDetail({
                     className="rounded-2xl border bg-background/70 p-4"
                   >
                     <p className="font-medium">{comment.authorName}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {formatShareDate(comment.createdAt)}
+                    </p>
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
                       {comment.body}
                     </p>
@@ -111,20 +128,29 @@ export function ShareDetail({
               className="mt-2"
               value={authorName}
               maxLength={80}
+              placeholder="Your name"
               onChange={(event) => onAuthorNameChange(event.currentTarget.value)}
             />
-            <label className="mt-4 block text-sm font-medium" htmlFor="share-comment-body">
-              Comment
-            </label>
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <label className="block text-sm font-medium" htmlFor="share-comment-body">
+                Comment
+              </label>
+              <span className="text-xs text-muted-foreground">{bodyLength}/2000</span>
+            </div>
             <textarea
               id="share-comment-body"
               data-slot="share-comment-textarea"
               className="mt-2 min-h-32 w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               value={body}
               maxLength={2000}
+              placeholder="Leave feedback, ask a question, or call out a moment in the video."
               onChange={(event) => onBodyChange(event.currentTarget.value)}
             />
-            {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+            {error ? (
+              <p className="mt-3 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
             <Button className="mt-4 w-full" type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Posting..." : "Post comment"}
             </Button>
@@ -133,4 +159,8 @@ export function ShareDetail({
       </div>
     </main>
   );
+}
+
+function formatShareDate(value: number) {
+  return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }

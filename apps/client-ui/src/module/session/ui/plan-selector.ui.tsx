@@ -1,6 +1,13 @@
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import type { Plan } from "@mira/server-core/rpc";
 import { Button } from "@/shared/ui/button.ui";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/select.ui";
 
 export type PlanSelectorProps = {
   plans: ReadonlyArray<Plan>;
@@ -92,19 +99,29 @@ export function PlanSelector({
                 >
                   Select plan
                 </label>
-                <select
-                  id="plan-selector-select"
-                  data-slot="plan-selector-select"
-                  className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                <Select
                   value={selectedPlan?.id ?? ""}
-                  onChange={(event) => onPlanSelect(event.currentTarget.value)}
+                  onValueChange={(value) => {
+                    if (value) {
+                      onPlanSelect(value);
+                    }
+                  }}
                 >
-                  {plans.map((plan) => (
-                    <option key={plan.id} value={plan.id}>
-                      {formatPlanLabel(plan)} - {plan.exploration.length} refs
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger
+                    id="plan-selector-select"
+                    data-slot="plan-selector-select"
+                    className="h-11 w-full rounded-xl border-border/80 bg-background/70 px-4 text-base shadow-inner shadow-black/20"
+                  >
+                    <SelectValue placeholder="Select plan" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl border-border/80 bg-popover/95 p-1.5 shadow-2xl shadow-black/30">
+                    {plans.map((plan) => (
+                      <SelectItem key={plan.id} value={plan.id} className="py-2.5 text-base">
+                        {formatPlanLabel(plan)} - {plan.exploration.length} refs
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {selectedPlan ? (
                   <div
                     data-slot="plan-selector-selected-summary"

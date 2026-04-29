@@ -15,4 +15,10 @@ export class SessionsHttpGroup extends HttpApiGroup.make("sessions")
       payload: SessionCreatePayload,
       success: Session,
     }),
+  )
+  .add(
+    HttpApiEndpoint.delete("delete", "/sessions/:id", {
+      params: { id: Schema.String },
+      success: Schema.Void,
+    }),
   ) {}

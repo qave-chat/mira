@@ -1,4 +1,6 @@
 import { Clock, Context, Effect, Layer } from "effect";
+import { WorkflowEngine } from "effect/unstable/workflow";
+import { PlansRepo } from "../plans/plans.repo";
 import type {
   Session,
   SessionCreatePayload,
@@ -7,6 +9,7 @@ import type {
 } from "./sessions.schema";
 import { SessionsRepo } from "./sessions.repo";
 import { ErrorSessionNotFound } from "./sessions.error";
+import { SessionDeleteR2Workflow } from "./sessions.workflow";
 
 const KSUID_EPOCH_SECONDS = 1_400_000_000;
 const KSUID_BASE62_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -55,7 +58,28 @@ export class SessionsService extends Context.Service<SessionsService>()("module/
       return toSession(row);
     }, withModuleLogs);
 
-    return { create, list, get } as const;
+    const deleteSession = Effect.fn("SessionsService.delete")(function* (input: {
+      readonly id: string;
+      readonly userId: string;
+    }) {
+      yield* Effect.annotateCurrentSpan({ "session.id": input.id, "user.id": input.userId });
+      const row = yield* repo.getById(input.id);
+      if (!row || row.userId !== input.userId) {
+        return yield* new ErrorSessionNotFound({ id: input.id });
+      }
+
+      const plansRepo = yield* PlansRepo;
+      const plans = yield* plansRepo.deleteBySessionId(input.id);
+      const keys = plans.flatMap((plan) => plan.exploration.map((item) => item.screenshot));
+      yield* repo.deleteById(input.id);
+      const workflowEngine = yield* WorkflowEngine.WorkflowEngine;
+      yield* SessionDeleteR2Workflow.execute({ sessionId: input.id, keys }, { discard: true }).pipe(
+        Effect.provideService(WorkflowEngine.WorkflowEngine, workflowEngine),
+      );
+      yield* Effect.logInfo("session.deleted");
+    }, withModuleLogs);
+
+    return { create, list, get, delete: deleteSession } as const;
   }),
 }) {}
 

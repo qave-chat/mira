@@ -33,11 +33,17 @@ export function SessionImagePreviewDialog({
             />
           }
         >
-          <img src={src} alt={alt} className="size-full object-cover" />
+          <img
+            src={src}
+            alt={alt}
+            className={
+              isUploading
+                ? "size-full animate-pulse object-cover opacity-70"
+                : "size-full object-cover"
+            }
+          />
           {isUploading ? (
-            <span className="absolute inset-0 flex items-end justify-center bg-black/25 pb-1 text-[10px] font-medium text-white">
-              Uploading
-            </span>
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent motion-safe:animate-pulse" />
           ) : null}
         </DialogTrigger>
         {onRemove ? (

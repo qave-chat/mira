@@ -1,4 +1,9 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Config, Effect, Layer, Redacted } from "effect";
 import { ErrorR2, R2 } from "./r2.contract";
@@ -60,6 +65,15 @@ export const R2Live = Layer.effect(
             expiresIn: input.expiresInSeconds,
           }),
         ),
+      deleteObject: (input) =>
+        wrapR2(() =>
+          client.send(
+            new DeleteObjectCommand({
+              Bucket: config.bucket,
+              Key: input.key,
+            }),
+          ),
+        ).pipe(Effect.asVoid),
     });
   }),
 );

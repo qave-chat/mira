@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { SessionDeleteAlertDialog } from "@/module/session/ui/session-delete-alert-dialog.ui";
 
 export type SessionListItem = {
   id: string;
@@ -8,9 +9,11 @@ export type SessionListItem = {
 
 export type SessionListProps = {
   sessions: ReadonlyArray<SessionListItem>;
+  deletingSessionId?: string;
+  onDelete?: (session: SessionListItem) => void;
 };
 
-export function SessionList({ sessions }: SessionListProps) {
+export function SessionList({ sessions, deletingSessionId, onDelete }: SessionListProps) {
   return (
     <section
       data-slot="session-list"
@@ -28,36 +31,50 @@ export function SessionList({ sessions }: SessionListProps) {
             <tr>
               <th className="px-6 py-3 font-medium">Name</th>
               <th className="px-6 py-3 font-medium">Plan</th>
+              <th className="px-6 py-3 text-right font-medium">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {sessions.length > 0 ? (
-              sessions.map((session) => (
-                <tr
-                  key={session.id}
-                  data-slot="session-list-row"
-                  className="transition-colors hover:bg-muted/30"
-                >
-                  <td className="px-6 py-4 font-medium">
-                    <Link
-                      to="/sessions/$sessionId"
-                      params={{ sessionId: session.id }}
-                      search={{ name: session.name }}
-                      className="text-primary underline-offset-4 hover:underline"
-                    >
-                      {session.name}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="rounded-full border px-2 py-1 text-xs font-medium">
-                      {session.plan}
-                    </span>
-                  </td>
-                </tr>
-              ))
+              sessions.map((session) => {
+                const isDeleting = deletingSessionId === session.id;
+
+                return (
+                  <tr
+                    key={session.id}
+                    data-slot="session-list-row"
+                    aria-busy={isDeleting || undefined}
+                    className={`transition-colors hover:bg-muted/30 ${isDeleting ? "bg-muted/40 opacity-70" : ""}`}
+                  >
+                    <td className="px-6 py-4 font-medium">
+                      <Link
+                        to="/sessions/$sessionId"
+                        params={{ sessionId: session.id }}
+                        search={{ name: session.name }}
+                        className={`text-primary underline-offset-4 hover:underline ${isDeleting ? "pointer-events-none" : ""}`}
+                      >
+                        {session.name}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="rounded-full border px-2 py-1 text-xs font-medium">
+                        {session.plan}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <SessionDeleteAlertDialog
+                        session={session}
+                        isDeleting={isDeleting}
+                        disabled={!onDelete || Boolean(deletingSessionId)}
+                        onConfirm={() => onDelete?.(session)}
+                      />
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr data-slot="session-list-empty">
-                <td colSpan={2} className="px-6 py-10 text-center text-muted-foreground">
+                <td colSpan={3} className="px-6 py-10 text-center text-muted-foreground">
                   No sessions yet. Create one to get started.
                 </td>
               </tr>

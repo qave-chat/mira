@@ -9,6 +9,7 @@ import { PlansLive } from "./module/plans/plans.rpc.impl";
 import { PlansServiceLive } from "./module/plans/plans.service";
 import { SessionsRepoLive } from "./module/sessions/sessions.repo";
 import { SessionsServiceLive } from "./module/sessions/sessions.service";
+import { SessionDeleteR2WorkflowLive } from "./module/sessions/sessions.workflow";
 import { VideoGenerateLive } from "./module/video-generate/video-generate.rpc.impl";
 import { VideoGenerateRepoLive } from "./module/video-generate/video-generate.repo";
 import { VideoGenerateRendererLive } from "./module/video-generate/video-generate.renderer";
@@ -35,6 +36,11 @@ const VideoGenerateLayers = Layer.mergeAll(VideoGenerateLive, VideoGenerateWorkf
   Layer.provide(WorkflowEngineOnlyLive),
 );
 
+const SessionWorkflowLayers = SessionDeleteR2WorkflowLive.pipe(
+  Layer.provide(R2Live),
+  Layer.provide(WorkflowEngineOnlyLive),
+);
+
 const PlansLayers = PlansLive.pipe(
   Layer.provide(PlansServiceLive),
   Layer.provide(PlansRepoLive),
@@ -42,6 +48,7 @@ const PlansLayers = PlansLive.pipe(
   Layer.provide(SessionsRepoLive),
   Layer.provide(AuthLive),
   Layer.provide(DbLive),
+  Layer.provide(WorkflowEngineOnlyLive),
 );
 
 const PlanGenerateRoutes = PlansGenerateLive.pipe(
@@ -51,9 +58,15 @@ const PlanGenerateRoutes = PlansGenerateLive.pipe(
   Layer.provide(SessionsServiceLive),
   Layer.provide(SessionsRepoLive),
   Layer.provide(DbLive),
+  Layer.provide(WorkflowEngineOnlyLive),
 );
 
-const Handlers = Layer.mergeAll(HealthLive, VideoGenerateLayers, PlansLayers);
+const Handlers = Layer.mergeAll(
+  HealthLive,
+  VideoGenerateLayers,
+  SessionWorkflowLayers,
+  PlansLayers,
+);
 
 const AuthRoutes = AuthCatchallLive.pipe(Layer.provide(AuthLive), Layer.provide(DbLive));
 

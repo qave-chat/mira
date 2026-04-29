@@ -2,6 +2,7 @@ import { assert, describe, it } from "@effect/vitest";
 import { Effect, Layer } from "effect";
 import { Db } from "../../platform/db.contract";
 import { makeTestDb } from "../../platform/db.impl";
+import { PlansRepoLive } from "../plans/plans.repo";
 import { SessionsRepoLive } from "./sessions.repo";
 import { ErrorSessionNotFound } from "./sessions.error";
 import { SessionsService, SessionsServiceLive } from "./sessions.service";
@@ -13,6 +14,7 @@ const TestDbLive = Layer.effect(
 
 const TestLive = SessionsServiceLive.pipe(
   Layer.provide(SessionsRepoLive),
+  Layer.provide(PlansRepoLive),
   Layer.provide(TestDbLive),
 );
 

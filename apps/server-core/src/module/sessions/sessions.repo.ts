@@ -30,6 +30,13 @@ export class SessionsRepo extends Context.Service<SessionsRepo>()("module/Sessio
         );
         return rows[0];
       }),
+      deleteById: Effect.fn("SessionsRepo.deleteById")(function* (id: string) {
+        yield* Effect.annotateCurrentSpan({ "session.id": id });
+        const rows = yield* db.query((d) =>
+          d.delete(sessions).where(eq(sessions.id, id)).returning(),
+        );
+        return rows[0];
+      }),
     } as const;
   }),
 }) {}

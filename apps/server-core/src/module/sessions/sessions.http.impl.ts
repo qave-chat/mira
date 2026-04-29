@@ -49,6 +49,15 @@ export const SessionsHttpHandlers = HttpApiBuilder.group(
             .create({ ...payload, userId })
             .pipe(Effect.catchTags({ ErrorDb: Effect.die }));
         }),
+      )
+      .handle(
+        "delete",
+        Effect.fn("HttpApi.sessions.delete")(function* ({ params }) {
+          const userId = yield* currentUserId();
+          return yield* service
+            .delete({ id: params.id, userId })
+            .pipe(Effect.catchTags({ ErrorDb: Effect.die, ErrorSessionNotFound: Effect.die }));
+        }),
       );
   }),
 );

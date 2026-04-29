@@ -15,6 +15,17 @@ export const SessionCreatePayload = Schema.Struct({
 });
 export type SessionCreatePayload = typeof SessionCreatePayload.Type;
 
+export const SessionDeleteR2WorkflowInput = Schema.Struct({
+  sessionId: Schema.String,
+  keys: Schema.Array(Schema.String),
+});
+export type SessionDeleteR2WorkflowInput = typeof SessionDeleteR2WorkflowInput.Type;
+
+export const SessionDeleteR2WorkflowResult = Schema.Struct({
+  deleted: Schema.Number,
+});
+export type SessionDeleteR2WorkflowResult = typeof SessionDeleteR2WorkflowResult.Type;
+
 export type SessionRow = {
   readonly id: string;
   readonly userId: string;

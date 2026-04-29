@@ -27,7 +27,11 @@ function SessionRoute() {
   const createSessionMutation = useAtomSet(HttpClient.mutation("sessions", "create"), {
     mode: "promiseExit",
   });
+  const deleteSessionMutation = useAtomSet(HttpClient.mutation("sessions", "delete"), {
+    mode: "promiseExit",
+  });
   const [sessionName, setSessionName] = useState("");
+  const [deletingSessionId, setDeletingSessionId] = useState<string | undefined>();
 
   async function createSession(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -52,6 +56,19 @@ function SessionRoute() {
     });
   }
 
+  async function deleteSession(session: { id: string; name: string }) {
+    setDeletingSessionId(session.id);
+    const exit = await deleteSessionMutation({ params: { id: session.id } });
+    if (Exit.isFailure(exit)) {
+      setDeletingSessionId(undefined);
+      console.error("Delete session failed:", Cause.pretty(exit.cause));
+      return;
+    }
+
+    refreshSessions();
+    setDeletingSessionId(undefined);
+  }
+
   const sessions = AsyncResult.match(sessionsResult, {
     onInitial: () => [],
     onSuccess: (result) => result.value,
@@ -71,7 +88,11 @@ function SessionRoute() {
         </ModuleLayoutActions>
       </ModuleLayoutHeader>
       <ModuleLayoutBody>
-        <SessionList sessions={sessions} />
+        <SessionList
+          sessions={sessions}
+          deletingSessionId={deletingSessionId}
+          onDelete={deleteSession}
+        />
       </ModuleLayoutBody>
     </ModuleLayout>
   );
