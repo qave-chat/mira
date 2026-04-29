@@ -41,7 +41,7 @@ const planInstructions = `Create a concise product workflow plan from the user's
 Return only JSON in this exact shape:
 {"title":"...","intent":"...","exploration":[{"screenshot":"...","reason":"..."}]}
 The title must be terse, descriptive, and at most 5 words. It should capture the user's intent for display in a compact plan selector.
-Use the screenshot value from the provided screenshots exactly. Each exploration item should explain why that screenshot matters for the workflow step. Link the steps in natural workflow order.`;
+Treat the screenshots as an ordered storyboard. Return exactly one exploration item per provided screenshot, in the exact same order. Do not reorder, skip, duplicate, or infer screenshots that were not provided. Use the screenshot value from the screenshot label exactly. Each exploration item should explain what that specific screenshot shows and why it matters for the workflow step.`;
 
 export const PlansGenerateLive = HttpRouter.use((router) =>
   Effect.gen(function* () {
@@ -98,14 +98,16 @@ export const PlansGenerateLive = HttpRouter.use((router) =>
                   role: "user",
                   content: [
                     { type: "input_text", text: `${planInstructions}\n\nIntent: ${intent}` },
-                    ...screenshots.map((screenshot, index) => ({
-                      type: "input_text",
-                      text: `Screenshot ${index + 1}: ${screenshot.url}`,
-                    })),
-                    ...screenshots.map((screenshot) => ({
-                      type: "input_image",
-                      image_url: screenshot.url,
-                    })),
+                    ...screenshots.flatMap((screenshot, index) => [
+                      {
+                        type: "input_text" as const,
+                        text: `Screenshot ${index + 1} value: ${screenshot.key}`,
+                      },
+                      {
+                        type: "input_image" as const,
+                        image_url: screenshot.url,
+                      },
+                    ]),
                   ],
                 },
               ],
