@@ -36,12 +36,14 @@ describe("PlansService", () => {
           sessionId: session.id,
           userId: "usr_test",
           exploration: [{ screenshot: "s3://first", reason: "Initial source" }],
+          title: "Product teaser",
           intent: "Make a product teaser",
         });
         const second = yield* plans.create({
           sessionId: session.id,
           userId: "usr_test",
           exploration: [{ screenshot: "s3://second", reason: "Better framing" }],
+          title: "Launch video",
           intent: "Make a concise launch video",
         });
         const list = yield* plans.list({ sessionId: session.id, userId: "usr_test" });
@@ -65,6 +67,7 @@ describe("PlansService", () => {
           sessionId: session.id,
           userId: "usr_owner",
           exploration: [{ screenshot: "s3://shot", reason: "Hero moment" }],
+          title: "Workflow demo",
           intent: "Show the workflow",
         });
         const fetched = yield* plans.get({ id: plan.id, userId: "usr_owner" });
@@ -85,6 +88,7 @@ describe("PlansService", () => {
           sessionId: session.id,
           userId: "usr_owner",
           exploration: [{ screenshot: "s3://shot", reason: "Hero moment" }],
+          title: "Workflow demo",
           intent: "Show the workflow",
         });
         const error = yield* plans.get({ id: plan.id, userId: "usr_other" }).pipe(Effect.flip);

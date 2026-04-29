@@ -11,6 +11,7 @@ const SESSION_ID = "ses_381nfd6tRUkJ61kxHLfCsp4YjX8";
 const PLAN_ID = "pla_381nfd6tRUkJ61kxHLfCsp4YjX8";
 const SESSION_NAME = "Video generation smoke test";
 const PHOTO_KEY = "video-generate/test/screenshot-2026-04-29-120118.png";
+const PLAN_TITLE = "Product walkthrough";
 const PLAN_INTENT = "Create a short product walkthrough video from this screenshot.";
 const PLAN_EXPLORATION = [
   {
@@ -56,6 +57,7 @@ const program = Effect.gen(function* () {
           sessionId: SESSION_ID,
           userId: user.id,
           exploration: PLAN_EXPLORATION,
+          title: PLAN_TITLE,
           intent: PLAN_INTENT,
         })
         .onConflictDoUpdate({
@@ -64,6 +66,7 @@ const program = Effect.gen(function* () {
             sessionId: SESSION_ID,
             userId: user.id,
             exploration: PLAN_EXPLORATION,
+            title: PLAN_TITLE,
             intent: PLAN_INTENT,
             updatedAt: sql`now()`,
           },

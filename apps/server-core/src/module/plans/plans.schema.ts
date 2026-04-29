@@ -25,6 +25,7 @@ export const Plan = Schema.Struct({
   userId: Schema.String,
   exploration: Schema.Array(PlanExplorationItem),
   links: Schema.Array(PlanLink),
+  title: Schema.String,
   intent: Schema.String,
   createdAt: Schema.Number,
   updatedAt: Schema.Number,
@@ -35,6 +36,7 @@ export const PlanCreatePayload = Schema.Struct({
   sessionId: Schema.String,
   exploration: Schema.Array(PlanExplorationItem),
   links: Schema.optional(Schema.Array(PlanLink)),
+  title: Schema.String,
   intent: Schema.String,
 });
 export type PlanCreatePayload = typeof PlanCreatePayload.Type;
@@ -52,6 +54,7 @@ export type PlanRow = {
   readonly userId: string;
   readonly exploration: ReadonlyArray<PlanExplorationItem>;
   readonly links: ReadonlyArray<PlanLink>;
+  readonly title: string;
   readonly intent: string;
   readonly createdAt: Date;
   readonly updatedAt: Date;

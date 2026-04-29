@@ -1,13 +1,7 @@
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import type { Plan } from "@mira/server-core/rpc";
 import { Button } from "@/shared/ui/button.ui";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui/select.ui";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/shared/ui/select.ui";
 
 export type PlanSelectorProps = {
   plans: ReadonlyArray<Plan>;
@@ -80,7 +74,7 @@ export function PlanSelector({
             <h2 className="mt-1 text-lg font-semibold tracking-tight">{sessionName}</h2>
             {selectedPlan ? (
               <p className="mt-1 line-clamp-2 text-sm leading-5 text-muted-foreground">
-                {selectedPlan.intent}
+                {selectedPlan.title}
               </p>
             ) : (
               <p className="mt-1 text-sm leading-5 text-muted-foreground">
@@ -112,7 +106,9 @@ export function PlanSelector({
                     data-slot="plan-selector-select"
                     className="h-11 w-full rounded-xl border-border/80 bg-background/70 px-4 text-base shadow-inner shadow-black/20"
                   >
-                    <SelectValue placeholder="Select plan" />
+                    <span className="min-w-0 flex-1 truncate text-left">
+                      {selectedPlan ? formatPlanLabel(selectedPlan) : "Select plan"}
+                    </span>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl border-border/80 bg-popover/95 p-1.5 shadow-2xl shadow-black/30">
                     {plans.map((plan) => (
@@ -216,6 +212,5 @@ export function PlanSelector({
 }
 
 function formatPlanLabel(plan: Plan) {
-  const createdAt = new Date(plan.createdAt);
-  return createdAt.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return plan.title;
 }

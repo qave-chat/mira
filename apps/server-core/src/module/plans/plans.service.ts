@@ -35,6 +35,7 @@ export class PlansService extends Context.Service<PlansService>()("module/PlansS
         userId: input.userId,
         exploration: input.exploration,
         links: input.links ?? createSequentialLinks(input.exploration.length),
+        title: input.title,
         intent: input.intent,
       };
       const row = yield* repo.insert(plan);
@@ -128,6 +129,7 @@ function toPlan(row: PlanRow): Plan {
     userId: row.userId,
     exploration: row.exploration,
     links: row.links,
+    title: row.title,
     intent: row.intent,
     createdAt: row.createdAt.getTime(),
     updatedAt: row.updatedAt.getTime(),

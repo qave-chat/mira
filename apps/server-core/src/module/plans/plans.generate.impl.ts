@@ -15,6 +15,7 @@ type UploadedScreenshot = {
 
 type GeneratedPlan = {
   readonly intent?: string;
+  readonly title?: string;
   readonly exploration?: ReadonlyArray<{
     readonly screenshot?: string;
     readonly reason?: string;
@@ -38,7 +39,8 @@ const json = (value: unknown) => {
 
 const planInstructions = `Create a concise product workflow plan from the user's intent and screenshots.
 Return only JSON in this exact shape:
-{"intent":"...","exploration":[{"screenshot":"...","reason":"..."}]}
+{"title":"...","intent":"...","exploration":[{"screenshot":"...","reason":"..."}]}
+The title must be terse, descriptive, and at most 5 words. It should capture the user's intent for display in a compact plan selector.
 Use the screenshot value from the provided screenshots exactly. Each exploration item should explain why that screenshot matters for the workflow step. Link the steps in natural workflow order.`;
 
 export const PlansGenerateLive = HttpRouter.use((router) =>
@@ -137,6 +139,7 @@ export const PlansGenerateLive = HttpRouter.use((router) =>
         Effect.catch(() =>
           Effect.succeed({
             intent,
+            title: createFallbackTitle(intent),
             exploration: screenshots.map((_, index) => ({
               reason: `Demonstrate workflow step ${index + 1}.`,
             })),
@@ -149,6 +152,7 @@ export const PlansGenerateLive = HttpRouter.use((router) =>
           sessionId,
           userId: session.user.id,
           intent: generated.intent?.trim() || intent,
+          title: normalizeTitle(generated.title, intent),
           exploration,
           links: createSequentialLinks(exploration.length),
         })
@@ -210,4 +214,14 @@ function normalizeExploration(plan: GeneratedPlan, screenshots: ReadonlyArray<Up
       items[index]?.reason?.trim() ||
       `Use screenshot ${index + 1} to demonstrate this step in the workflow.`,
   }));
+}
+
+function normalizeTitle(title: string | undefined, intent: string) {
+  const trimmed = title?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed.slice(0, 64) : createFallbackTitle(intent);
+}
+
+function createFallbackTitle(intent: string) {
+  const words = intent.trim().split(/\s+/).filter(Boolean).slice(0, 5).join(" ");
+  return words.length > 0 ? words.slice(0, 64) : "Untitled plan";
 }

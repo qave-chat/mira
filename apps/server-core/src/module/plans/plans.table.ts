@@ -9,6 +9,7 @@ export const plans = pgTable(
     userId: text("user_id").notNull(),
     exploration: jsonb("exploration").$type<ReadonlyArray<PlanExplorationItem>>().notNull(),
     links: jsonb("links").$type<ReadonlyArray<PlanLink>>().notNull().default([]),
+    title: text("title").notNull(),
     intent: text("intent").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

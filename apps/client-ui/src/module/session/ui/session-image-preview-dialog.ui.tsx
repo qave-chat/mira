@@ -49,13 +49,13 @@ export function SessionImagePreviewDialog({
         {onRemove ? (
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             size="icon-sm"
             aria-label={`Remove ${alt}`}
-            className="absolute -top-2 -right-2 size-6 rounded-full shadow-sm"
+            className="absolute -top-2 -right-2 size-6 rounded-full bg-background text-foreground shadow-sm hover:bg-neutral-200 dark:bg-neutral-900 dark:hover:bg-neutral-700"
             onClick={onRemove}
           >
-            <XIcon className="size-3.5" />
+            <XIcon className="size-3.5 opacity-100" />
           </Button>
         ) : null}
       </div>

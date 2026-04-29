@@ -14,6 +14,7 @@ import {
   SelectionMode,
   useEdgesState,
   useNodesState,
+  useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import {
@@ -61,6 +62,7 @@ type UploadImagesResponse = {
 type GeneratedPlan = {
   id: string;
   intent: string;
+  title: string;
   exploration: ReadonlyArray<{
     screenshot: string;
     screenshotUrl?: string;
@@ -121,7 +123,13 @@ type SessionNode = PlaceholderNodeType | WelcomeNodeType;
 type CanvasMode = "navigate" | "select";
 
 function WelcomeNode({ id, data, selected }: NodeProps<SessionNode>) {
+  const { deleteElements } = useReactFlow<SessionNode, Edge>();
   const editableText = data.reason ?? data.description ?? data.label;
+
+  function dismissCard(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    void deleteElements({ nodes: [{ id }] });
+  }
 
   return (
     <div
@@ -181,6 +189,13 @@ function WelcomeNode({ id, data, selected }: NodeProps<SessionNode>) {
       ) : null}
       {!data.isEditing && data.reason ? (
         <p className="mt-3 max-w-72 text-sm leading-5">{data.reason}</p>
+      ) : null}
+      {!data.isEditing && data.items ? (
+        <div className="mt-4 flex justify-end">
+          <Button type="button" size="sm" onClick={dismissCard}>
+            Okay
+          </Button>
+        </div>
       ) : null}
     </div>
   );
@@ -933,6 +948,7 @@ export function SessionDetail({
       );
       setWorkflowPrompt("");
       setRealtimeDraft("");
+      setAttachments([]);
       realtimeDraftRef.current = "";
       onPlanCreated?.(result.plan.id);
     } catch (error) {
@@ -1132,7 +1148,7 @@ export function SessionDetail({
               ? "Connecting voice input..."
               : isRecording
                 ? "Listening..."
-                : "Describe what you want to create..."
+                : "Describe the product workflow you want to capture..."
           }
           className="min-h-14 w-full resize-none bg-transparent text-base leading-6 outline-none placeholder:text-muted-foreground"
           onChange={(event) => {
