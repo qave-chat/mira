@@ -1,0 +1,93 @@
+apps/client-ui/src/module/session/ui/plan-selector.ui.tsx
+  9d0b9dad44b0b1bb 11-12,29-30,87-118,154,161-174
+apps/client-ui/src/module/session/ui/plan-selector.ui.story.tsx
+  9d0b9dad44b0b1bb 39-40,79-80
+apps/server-core/src/module/share/share.repo.ts
+  9d0b9dad44b0b1bb 1-43,45-55,57-71
+apps/client-ui/src/module/session/session-detail.route.tsx
+  9d0b9dad44b0b1bb 3,9,36,39-41,115-116,133-153,177-178,180-181
+apps/server-core/src/platform/db.impl.ts
+  9d0b9dad44b0b1bb 9,11,23-26
+apps/client-ui/src/module/share/ui/share-detail.ui.story.tsx
+  af47827d7ad70822 16
+apps/server-core/src/module/share/share.schema.ts
+  9d0b9dad44b0b1bb 52-79
+apps/server-core/src/module/share/share.service.ts
+  9d0b9dad44b0b1bb 7,11,16-17,23-26,38-39,50-51,55,57,61,68,70,74-75,80,82,87,91-92,100,120-122,126,128,136-196
+apps/server-core/src/module/share/share.http.impl.ts
+  9d0b9dad44b0b1bb 15-17,23,29,35-37
+apps/server-core/src/module/video-generate/video-generate.workflow.ts
+  9d0b9dad44b0b1bb 5,27,32-38,43-49,58-64,68-76
+apps/server-core/src/module/video-generate/video-generate.rpc.impl.ts
+  9d0b9dad44b0b1bb 10,13-15
+apps/server-core/src/module/share/share.table.ts
+  9d0b9dad44b0b1bb 1-37
+apps/client-ui/src/module/share/ui/share-detail.ui.tsx
+  af47827d7ad70822 8,21,43,65-66
+apps/server-core/src/module/video-generate/video-generate.repo.ts
+  9d0b9dad44b0b1bb 1-5,7-57
+apps/server-core/src/module/video-generate/video-generate.table.ts
+  9d0b9dad44b0b1bb 1-20
+apps/server-core/src/main.ts
+  ab4764494bda69e6 32
+  9d0b9dad44b0b1bb 12,29
+apps/server-core/drizzle/0003_bouncy_sabretooth.sql
+  9d0b9dad44b0b1bb 1-45
+apps/server-core/src/module/share/share.service.test.ts
+  9d0b9dad44b0b1bb 2-5,8-17,20-31,33-38
+apps/server-core/src/platform/http.impl.ts
+  9d0b9dad44b0b1bb 5,22-26
+apps/server-core/src/module/video-generate/video-generate.service.ts
+  9d0b9dad44b0b1bb 1,5-10,15-18,25,39-51,56,62,67,70,74-82,85-88,98-100,119-157
+apps/server-core/src/module/video-generate/video-generate.schema.ts
+  9d0b9dad44b0b1bb 22-31,46-65,68-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "9524af97bc419eda70ab7d8227108919e50cbe82",
+  "prompts": {
+    "9d0b9dad44b0b1bb": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_228c79c03ffe4xDCpbrhrQSAbP",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 684,
+      "total_deletions": 141,
+      "accepted_lines": 662,
+      "overriden_lines": 3,
+      "messages_url": "https://usegitai.com/cas/ce1b1f653b8b5bf51daf0141faee0f5a95d6336bf8452143e2f31877bee466f4"
+    },
+    "ab4764494bda69e6": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_228b948a8ffeTSMZwMOSxiSByv",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/5d37d81a34ced9b4b072c8aa70fcd9aa0b01acf2e6446d417c9146a594e2fb84"
+    },
+    "af47827d7ad70822": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_228b3ca3dffeo9rFl7cbuyBkdF",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 8,
+      "accepted_lines": 6,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/2bb0c3df65001805416996a8a14b5aea2559f71afe5edbb750b7669196c43d65"
+    }
+  }
+}
