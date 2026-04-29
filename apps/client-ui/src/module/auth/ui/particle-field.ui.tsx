@@ -51,7 +51,7 @@ const SUBMIT_IMPULSE_SECONDARY = 0.2;
 function subscribeDocumentDark(callback: () => void) {
   const el = document.documentElement;
   const mutationObserver = new MutationObserver(callback);
-  mutationObserver.observe(el, { attributes: true, attributeFilter: ["class"] });
+  mutationObserver.observe(el, { attributes: true, attributeFilter: ["data-theme"] });
   const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
   mediaQuery.addEventListener("change", callback);
 
@@ -62,7 +62,7 @@ function subscribeDocumentDark(callback: () => void) {
 }
 
 function getDocumentDarkSnapshot() {
-  return document.documentElement.classList.contains("dark");
+  return document.documentElement.getAttribute("data-theme") === "dark";
 }
 
 function getServerDarkSnapshot() {

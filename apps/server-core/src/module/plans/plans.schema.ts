@@ -4,6 +4,12 @@ export const PlanExplorationItem = Schema.Struct({
   screenshot: Schema.String,
   screenshotUrl: Schema.optional(Schema.String),
   reason: Schema.String,
+  position: Schema.optional(
+    Schema.Struct({
+      x: Schema.Number,
+      y: Schema.Number,
+    }),
+  ),
 });
 export type PlanExplorationItem = typeof PlanExplorationItem.Type;
 

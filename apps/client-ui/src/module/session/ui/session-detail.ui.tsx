@@ -14,7 +14,6 @@ import {
   SelectionMode,
   useEdgesState,
   useNodesState,
-  useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import {
@@ -66,6 +65,10 @@ type GeneratedPlan = {
     screenshot: string;
     screenshotUrl?: string;
     reason: string;
+    position?: {
+      x: number;
+      y: number;
+    };
   }>;
   links: ReadonlyArray<{
     from: string;
@@ -105,6 +108,11 @@ type WelcomeNodeData = {
   items?: ReadonlyArray<string>;
   screenshotUrl?: string;
   reason?: string;
+  isEditing?: boolean;
+  editOriginalText?: string;
+  onEditChange?: (nodeId: string, text: string) => void;
+  onEditCommit?: (nodeId: string, text: string) => void;
+  onEditCancel?: (nodeId: string) => void;
 };
 
 type WelcomeNodeType = Node<WelcomeNodeData, "welcome">;
@@ -113,38 +121,25 @@ type SessionNode = PlaceholderNodeType | WelcomeNodeType;
 type CanvasMode = "navigate" | "select";
 
 function WelcomeNode({ id, data, selected }: NodeProps<SessionNode>) {
-  const { deleteElements } = useReactFlow<SessionNode, Edge>();
-
-  function deleteNode(event: React.MouseEvent<HTMLButtonElement>) {
-    event.stopPropagation();
-    void deleteElements({ nodes: [{ id }] });
-  }
+  const editableText = data.reason ?? data.description ?? data.label;
 
   return (
     <div
       className={cn(
-        "relative min-w-64 rounded-xl border border-neutral-300 bg-neutral-100 p-5 pr-12 text-neutral-950 shadow-xl shadow-black/15 ring-1 ring-black/5 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:shadow-black/35 dark:ring-white/5",
+        "relative min-w-64 rounded-xl border border-neutral-300 bg-neutral-100 p-5 text-neutral-950 shadow-xl shadow-black/15 ring-1 ring-black/5 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:shadow-black/35 dark:ring-white/5",
         selected &&
           "border-primary ring-2 ring-primary/70 ring-offset-2 ring-offset-background dark:border-primary dark:ring-primary/80",
       )}
     >
       <Handle type="target" position={Position.Left} className="opacity-0" />
       <Handle type="source" position={Position.Right} className="opacity-0" />
-      <button
-        type="button"
-        aria-label="Delete welcome node"
-        className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-md text-neutral-500 hover:bg-neutral-200 hover:text-neutral-950 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-50"
-        onClick={deleteNode}
-      >
-        x
-      </button>
       <div className="text-base font-semibold">{data.label}</div>
-      {data.description ? (
+      {!data.isEditing && data.description ? (
         <p className="mt-2 max-w-72 text-sm leading-5 text-neutral-600 dark:text-neutral-300">
           {data.description}
         </p>
       ) : null}
-      {data.items ? (
+      {!data.isEditing && data.items ? (
         <ul className="mt-3 max-w-72 space-y-1.5 text-sm leading-5 text-neutral-700 dark:text-neutral-200">
           {data.items.map((item) => (
             <li key={item} className="flex gap-2">
@@ -161,11 +156,35 @@ function WelcomeNode({ id, data, selected }: NodeProps<SessionNode>) {
           className="mt-3 h-32 w-full rounded-lg border border-neutral-300 object-cover dark:border-neutral-700"
         />
       ) : null}
-      {data.reason ? <p className="mt-3 max-w-72 text-sm leading-5">{data.reason}</p> : null}
+      {data.isEditing ? (
+        <textarea
+          autoFocus
+          value={editableText}
+          className="nodrag nowheel mt-3 min-h-24 w-72 resize-none rounded-lg border border-primary/40 bg-background p-3 text-sm leading-5 text-foreground outline-none ring-2 ring-primary/20"
+          onChange={(event) => data.onEditChange?.(id, event.target.value)}
+          onBlur={(event) => data.onEditCommit?.(id, event.currentTarget.value)}
+          onPointerDown={(event) => event.stopPropagation()}
+          onKeyDown={(event) => {
+            event.stopPropagation();
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
+            if (event.key === "Escape") {
+              event.preventDefault();
+              data.onEditCancel?.(id);
+              event.currentTarget.blur();
+            }
+          }}
+          onWheel={(event) => event.stopPropagation()}
+        />
+      ) : null}
+      {!data.isEditing && data.reason ? (
+        <p className="mt-3 max-w-72 text-sm leading-5">{data.reason}</p>
+      ) : null}
     </div>
   );
 }
-
 const nodeTypes = {
   placeholder: WelcomeNode,
   welcome: WelcomeNode,
@@ -198,6 +217,19 @@ type ContextMenuPosition = {
   y: number;
 };
 
+type NodeContextMenuPosition = {
+  nodeId: string;
+  x: number;
+  y: number;
+};
+
+type PlanHistorySnapshot = ReadonlyArray<Pick<GeneratedPlan, "id" | "exploration" | "links">>;
+
+type PlanHistoryEntry = {
+  before: PlanHistorySnapshot;
+  after: PlanHistorySnapshot;
+};
+
 export type SessionDetailProps = {
   plan?: GeneratedPlan;
   plans?: ReadonlyArray<GeneratedPlan>;
@@ -217,6 +249,8 @@ export function SessionDetail({
   const [nodes, setNodes, onNodesChange] = useNodesState<SessionNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
   const [contextMenuPosition, setContextMenuPosition] = useState<ContextMenuPosition | null>(null);
+  const [nodeContextMenuPosition, setNodeContextMenuPosition] =
+    useState<NodeContextMenuPosition | null>(null);
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance<
     SessionNode,
     Edge
@@ -238,6 +272,12 @@ export function SessionDetail({
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const realtimeDraftRef = useRef("");
   const realtimeDraftFlushRef = useRef<number | null>(null);
+  const cancelledEditNodeIdsRef = useRef(new Set<string>());
+  const plansRef = useRef(plans);
+  const attachmentsRef = useRef(attachments);
+  const isNodeEditingRef = useRef(false);
+  const undoHistoryRef = useRef<PlanHistoryEntry[]>([]);
+  const redoHistoryRef = useRef<PlanHistoryEntry[]>([]);
   const displayedPrompt = realtimeDraft
     ? appendTranscript(workflowPrompt, realtimeDraft)
     : workflowPrompt;
@@ -245,6 +285,7 @@ export function SessionDetail({
   const canGeneratePlan = displayedPrompt.trim().length > 0 || attachments.length > 0;
 
   useEffect(() => {
+    plansRef.current = plans;
     if (plans.length > 0) {
       renderPlans(plans, attachments);
       return;
@@ -254,6 +295,39 @@ export function SessionDetail({
       renderPlans([plan], attachments);
     }
   }, [plan?.id, plans]);
+
+  useEffect(() => {
+    attachmentsRef.current = attachments;
+  }, [attachments]);
+
+  useEffect(() => {
+    function handleUndoRedo(event: KeyboardEvent) {
+      const target = event.target;
+      if (isNodeEditingRef.current && isEditableTarget(target)) {
+        return;
+      }
+
+      const usesModifier = event.metaKey || event.ctrlKey;
+      if (!usesModifier || event.altKey) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      if (key === "z" && !event.shiftKey) {
+        event.preventDefault();
+        undoPlanHistory();
+        return;
+      }
+
+      if ((key === "z" && event.shiftKey) || key === "y") {
+        event.preventDefault();
+        redoPlanHistory();
+      }
+    }
+
+    document.addEventListener("keydown", handleUndoRedo, { capture: true });
+    return () => document.removeEventListener("keydown", handleUndoRedo, { capture: true });
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -266,6 +340,7 @@ export function SessionDetail({
 
   function openContextMenu(event: MouseEvent | React.MouseEvent) {
     event.preventDefault();
+    setNodeContextMenuPosition(null);
     const flowPosition = reactFlowInstance?.screenToFlowPosition({
       x: event.clientX,
       y: event.clientY,
@@ -280,6 +355,133 @@ export function SessionDetail({
 
   function closeContextMenu() {
     setContextMenuPosition(null);
+    setNodeContextMenuPosition(null);
+  }
+
+  function openNodeContextMenu(event: React.MouseEvent, node: SessionNode) {
+    event.preventDefault();
+    event.stopPropagation();
+    setContextMenuPosition(null);
+    setNodeContextMenuPosition({ nodeId: node.id, x: event.clientX, y: event.clientY });
+  }
+
+  function deleteContextMenuNode() {
+    if (!nodeContextMenuPosition) {
+      return;
+    }
+
+    void reactFlowInstance?.deleteElements({ nodes: [{ id: nodeContextMenuPosition.nodeId }] });
+    closeContextMenu();
+  }
+
+  function editContextMenuNode() {
+    if (!nodeContextMenuPosition) {
+      return;
+    }
+
+    editNode(nodeContextMenuPosition.nodeId);
+    closeContextMenu();
+  }
+
+  function editNode(nodeId: string) {
+    setNodes((currentNodes) =>
+      currentNodes.map((node) =>
+        node.id === nodeId
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                editOriginalText: getEditableNodeText(node),
+                isEditing: true,
+              },
+            }
+          : node,
+      ),
+    );
+    isNodeEditingRef.current = true;
+  }
+
+  function editDoubleClickedNode(event: React.MouseEvent, node: SessionNode) {
+    event.preventDefault();
+    event.stopPropagation();
+    editNode(node.id);
+    closeContextMenu();
+  }
+
+  function updateNodeText(nodeId: string, text: string) {
+    setNodes((currentNodes) =>
+      currentNodes.map((node) =>
+        node.id === nodeId
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                ...(node.data.reason !== undefined
+                  ? { reason: text }
+                  : node.data.description !== undefined
+                    ? { description: text }
+                    : { label: text }),
+              },
+            }
+          : node,
+      ),
+    );
+  }
+
+  function commitNodeText(nodeId: string, text: string) {
+    if (cancelledEditNodeIdsRef.current.has(nodeId)) {
+      cancelledEditNodeIdsRef.current.delete(nodeId);
+      return;
+    }
+
+    setNodes((currentNodes) =>
+      currentNodes.map((node) =>
+        node.id === nodeId
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                editOriginalText: undefined,
+                isEditing: false,
+                ...(node.data.reason !== undefined
+                  ? { reason: text }
+                  : node.data.description !== undefined
+                    ? { description: text }
+                    : { label: text }),
+              },
+            }
+          : node,
+      ),
+    );
+    isNodeEditingRef.current = false;
+    persistEditedNodeText(nodeId, text);
+  }
+
+  function cancelNodeTextEdit(nodeId: string) {
+    cancelledEditNodeIdsRef.current.add(nodeId);
+    isNodeEditingRef.current = false;
+    setNodes((currentNodes) =>
+      currentNodes.map((node) => {
+        if (node.id !== nodeId) {
+          return node;
+        }
+
+        const originalText = node.data.editOriginalText ?? getEditableNodeText(node);
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            editOriginalText: undefined,
+            isEditing: false,
+            ...(node.data.reason !== undefined
+              ? { reason: originalText }
+              : node.data.description !== undefined
+                ? { description: originalText }
+                : { label: originalText }),
+          },
+        };
+      }),
+    );
   }
 
   function addPlaceholderNode() {
@@ -288,7 +490,12 @@ export function SessionDetail({
     }
 
     const newNode = {
-      data: { label: "New plan node" },
+      data: {
+        label: "New plan node",
+        onEditCancel: cancelNodeTextEdit,
+        onEditChange: updateNodeText,
+        onEditCommit: commitNodeText,
+      },
       id: `placeholder-${crypto.randomUUID()}`,
       position: { x: contextMenuPosition.flowX, y: contextMenuPosition.flowY },
       type: "placeholder",
@@ -296,6 +503,56 @@ export function SessionDetail({
 
     setNodes((currentNodes) => [...currentNodes, newNode]);
     closeContextMenu();
+  }
+
+  function pushPlanHistory(before: PlanHistorySnapshot, after: PlanHistorySnapshot) {
+    undoHistoryRef.current = [...undoHistoryRef.current, { before, after }];
+    redoHistoryRef.current = [];
+  }
+
+  function undoPlanHistory() {
+    const entry = undoHistoryRef.current.at(-1);
+    if (!entry) {
+      return;
+    }
+
+    undoHistoryRef.current = undoHistoryRef.current.slice(0, -1);
+    redoHistoryRef.current = [...redoHistoryRef.current, entry];
+    applyPlanSnapshot(entry.before, "Could not persist undo.");
+  }
+
+  function redoPlanHistory() {
+    const entry = redoHistoryRef.current.at(-1);
+    if (!entry) {
+      return;
+    }
+
+    redoHistoryRef.current = redoHistoryRef.current.slice(0, -1);
+    undoHistoryRef.current = [...undoHistoryRef.current, entry];
+    applyPlanSnapshot(entry.after, "Could not persist redo.");
+  }
+
+  function applyPlanSnapshot(snapshot: PlanHistorySnapshot, errorMessage: string) {
+    if (!onPlanUpdated) {
+      return;
+    }
+
+    const nextPlans = mergePlanSnapshot(plansRef.current, snapshot);
+    plansRef.current = nextPlans;
+    renderPlans(nextPlans, attachmentsRef.current);
+    setPlanPersistError(null);
+    void persistPlanSnapshot(snapshot).catch((error: unknown) => {
+      setPlanPersistError(error instanceof Error ? error.message : errorMessage);
+      renderPlans(plansRef.current, attachmentsRef.current);
+    });
+  }
+
+  async function persistPlanSnapshot(snapshot: PlanHistorySnapshot) {
+    if (!onPlanUpdated) {
+      return;
+    }
+
+    await Promise.all(snapshot.map((plan) => onPlanUpdated(plan)));
   }
 
   function persistDeletedNodes(deletedNodes: SessionNode[]) {
@@ -319,6 +576,21 @@ export function SessionDetail({
       return;
     }
 
+    const before = createPlanSnapshot(plans);
+    const updatedPlans = plans.map((currentPlan) => {
+      const deletedStepIndexes = deletedStepIndexesByPlanId.get(currentPlan.id);
+      if (!deletedStepIndexes) {
+        return currentPlan;
+      }
+
+      const exploration = currentPlan.exploration.filter(
+        (_, index) => !deletedStepIndexes.has(index),
+      );
+      return { ...currentPlan, exploration, links: createSequentialLinks(exploration.length) };
+    });
+    const after = createPlanSnapshot(updatedPlans);
+    pushPlanHistory(before, after);
+    plansRef.current = updatedPlans;
     setPlanPersistError(null);
     for (const [planId, deletedStepIndexes] of deletedStepIndexesByPlanId) {
       const deletedPlan = plans.find((item) => item.id === planId);
@@ -340,6 +612,92 @@ export function SessionDetail({
         renderPlans(plans, attachments);
       });
     }
+  }
+
+  function persistEditedNodeText(nodeId: string, editedText: string) {
+    if (!onPlanUpdated) {
+      return;
+    }
+
+    const parsed = parsePlanStepNodeId(nodeId);
+    if (!parsed) {
+      return;
+    }
+
+    const currentPlans = plansRef.current;
+    const editedPlan = currentPlans.find((item) => item.id === parsed.planId);
+    const reason = editedText.trim();
+    if (!editedPlan || !editedPlan.exploration[parsed.stepIndex]) {
+      return;
+    }
+
+    const exploration = editedPlan.exploration.map((item, index) =>
+      index === parsed.stepIndex ? { ...item, reason } : item,
+    );
+    const updatedPlan = { ...editedPlan, exploration, links: editedPlan.links };
+    const updatedPlans = currentPlans.map((item) =>
+      item.id === editedPlan.id ? updatedPlan : item,
+    );
+
+    pushPlanHistory(createPlanSnapshot(currentPlans), createPlanSnapshot(updatedPlans));
+    plansRef.current = updatedPlans;
+    renderPlans(updatedPlans, attachmentsRef.current);
+    setPlanPersistError(null);
+    void onPlanUpdated({
+      id: editedPlan.id,
+      exploration,
+      links: editedPlan.links,
+    }).catch((error: unknown) => {
+      setPlanPersistError(
+        error instanceof Error ? error.message : "Could not persist edited node.",
+      );
+      renderPlans(plansRef.current, attachmentsRef.current);
+    });
+  }
+
+  function persistNodePositions(_event: React.MouseEvent, draggedNode: SessionNode) {
+    if (!onPlanUpdated) {
+      return;
+    }
+
+    const parsed = parsePlanStepNodeId(draggedNode.id);
+    if (!parsed) {
+      return;
+    }
+
+    const currentPlans = plansRef.current;
+    const movedPlan = currentPlans.find((item) => item.id === parsed.planId);
+    if (!movedPlan || !movedPlan.exploration[parsed.stepIndex]) {
+      return;
+    }
+
+    const planIndex = currentPlans.findIndex((item) => item.id === movedPlan.id);
+    const nodePositionById = new Map(
+      reactFlowInstance?.getNodes().map((node) => [node.id, node.position]) ?? [],
+    );
+    const exploration = movedPlan.exploration.map((item, index) => ({
+      ...item,
+      position:
+        nodePositionById.get(getPlanStepNodeId(movedPlan.id, index)) ??
+        item.position ??
+        getDefaultPlanStepPosition(planIndex, index),
+    }));
+    const updatedPlan = { ...movedPlan, exploration, links: movedPlan.links };
+    const updatedPlans = currentPlans.map((item) =>
+      item.id === movedPlan.id ? updatedPlan : item,
+    );
+
+    pushPlanHistory(createPlanSnapshot(currentPlans), createPlanSnapshot(updatedPlans));
+    plansRef.current = updatedPlans;
+    setPlanPersistError(null);
+    void onPlanUpdated({
+      id: updatedPlan.id,
+      exploration: updatedPlan.exploration,
+      links: updatedPlan.links,
+    }).catch((error: unknown) => {
+      setPlanPersistError(error instanceof Error ? error.message : "Could not persist moved node.");
+      renderPlans(plansRef.current, attachmentsRef.current);
+    });
   }
 
   async function uploadImages(files: File[]) {
@@ -595,12 +953,12 @@ export function SessionDetail({
       renderedPlan.exploration.map((item, stepIndex) => ({
         id: getPlanStepNodeId(renderedPlan.id, stepIndex),
         type: "placeholder" as const,
-        position: {
-          x: PLAN_NODE_START_X + stepIndex * PLAN_NODE_GAP_X,
-          y: PLAN_NODE_START_Y + planIndex * PLAN_ROW_GAP_Y + (stepIndex % 2) * PLAN_NODE_STAGGER_Y,
-        },
+        position: item.position ?? getDefaultPlanStepPosition(planIndex, stepIndex),
         data: {
           label: `Plan ${planIndex + 1} · Step ${stepIndex + 1}`,
+          onEditCancel: cancelNodeTextEdit,
+          onEditChange: updateNodeText,
+          onEditCommit: commitNodeText,
           reason: item.reason,
           screenshotUrl: item.screenshotUrl ?? attachmentByKey.get(item.screenshot)?.url,
         },
@@ -651,11 +1009,14 @@ export function SessionDetail({
         panOnDrag={canvasMode === "navigate"}
         selectionOnDrag={canvasMode === "select"}
         selectionMode={SelectionMode.Partial}
-        multiSelectionKeyCode={null}
+        multiSelectionKeyCode={["Meta", "Shift"]}
         deleteKeyCode={["Backspace", "Delete"]}
         onPaneClick={closeContextMenu}
         onPaneContextMenu={openContextMenu}
-        zoomOnDoubleClick
+        onNodeContextMenu={openNodeContextMenu}
+        onNodeDoubleClick={editDoubleClickedNode}
+        onNodeDragStop={persistNodePositions}
+        zoomOnDoubleClick={false}
         zoomOnPinch
         zoomOnScroll
         colorMode={resolvedTheme}
@@ -853,12 +1214,28 @@ export function SessionDetail({
           >
             Add node
           </button>
+        </div>
+      ) : null}
+
+      {nodeContextMenuPosition ? (
+        <div
+          className="fixed z-50 min-w-44 overflow-hidden rounded-lg border border-border bg-popover p-1 text-sm text-popover-foreground shadow-lg"
+          style={{ left: nodeContextMenuPosition.x, top: nodeContextMenuPosition.y }}
+          onContextMenu={(event) => event.preventDefault()}
+        >
           <button
             type="button"
-            className="w-full rounded-md px-3 py-2 text-left text-muted-foreground hover:bg-muted hover:text-foreground"
-            onClick={closeContextMenu}
+            className="w-full rounded-md px-3 py-2 text-left hover:bg-muted"
+            onClick={editContextMenuNode}
           >
-            Close menu
+            Edit
+          </button>
+          <button
+            type="button"
+            className="w-full rounded-md px-3 py-2 text-left text-destructive hover:bg-destructive/10"
+            onClick={deleteContextMenuNode}
+          >
+            Delete
           </button>
         </div>
       ) : null}
@@ -923,6 +1300,13 @@ function getPersistedStepNodeId(planId: string, stepId: string) {
   return `${planId}-${stepId}`;
 }
 
+function getDefaultPlanStepPosition(planIndex: number, stepIndex: number) {
+  return {
+    x: PLAN_NODE_START_X + stepIndex * PLAN_NODE_GAP_X,
+    y: PLAN_NODE_START_Y + planIndex * PLAN_ROW_GAP_Y + (stepIndex % 2) * PLAN_NODE_STAGGER_Y,
+  };
+}
+
 function parsePlanStepNodeId(nodeId: string) {
   const match = /^(.*)-step-(\d+)$/.exec(nodeId);
   if (!match) {
@@ -933,6 +1317,37 @@ function parsePlanStepNodeId(nodeId: string) {
     planId: match[1],
     stepIndex: Number(match[2]) - 1,
   };
+}
+
+function getEditableNodeText(node: SessionNode) {
+  return node.data.reason ?? node.data.description ?? node.data.label;
+}
+
+function createPlanSnapshot(plans: ReadonlyArray<GeneratedPlan>): PlanHistorySnapshot {
+  return plans.map((plan) => ({
+    id: plan.id,
+    exploration: plan.exploration.map((item) => ({ ...item })),
+    links: plan.links.map((link) => ({ ...link })),
+  }));
+}
+
+function mergePlanSnapshot(
+  plans: ReadonlyArray<GeneratedPlan>,
+  snapshot: PlanHistorySnapshot,
+): ReadonlyArray<GeneratedPlan> {
+  const snapshotById = new Map(snapshot.map((plan) => [plan.id, plan]));
+  return plans.map((plan) => {
+    const snapshotPlan = snapshotById.get(plan.id);
+    return snapshotPlan ? { ...plan, ...snapshotPlan } : plan;
+  });
+}
+
+function isEditableTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
 }
 
 async function readUploadError(response: Response) {
