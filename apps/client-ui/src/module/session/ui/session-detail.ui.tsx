@@ -78,6 +78,8 @@ const REALTIME_DRAFT_FLUSH_MS = 40;
 
 type WelcomeNodeData = {
   label: string;
+  description?: string;
+  items?: ReadonlyArray<string>;
   screenshotUrl?: string;
   reason?: string;
 };
@@ -105,6 +107,21 @@ function WelcomeNode({ id, data }: NodeProps<SessionNode>) {
         x
       </button>
       <div className="text-base font-semibold">{data.label}</div>
+      {data.description ? (
+        <p className="mt-2 max-w-72 text-sm leading-5 text-neutral-600 dark:text-neutral-300">
+          {data.description}
+        </p>
+      ) : null}
+      {data.items ? (
+        <ul className="mt-3 max-w-72 space-y-1.5 text-sm leading-5 text-neutral-700 dark:text-neutral-200">
+          {data.items.map((item) => (
+            <li key={item} className="flex gap-2">
+              <span className="mt-2 size-1 shrink-0 rounded-full bg-neutral-400 dark:bg-neutral-500" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {data.screenshotUrl ? (
         <img
           src={data.screenshotUrl}
@@ -125,7 +142,14 @@ const nodeTypes = {
 const initialNodes: SessionNode[] = [
   {
     data: {
-      label: "Welcome to the graph",
+      description: "Turn a product workflow into a step-by-step demo plan.",
+      items: [
+        "Describe the workflow in the prompt.",
+        "Attach screenshots for key UI states when helpful.",
+        "Create a plan to generate linked steps on the canvas.",
+        "Use the finished plan for demo video generation.",
+      ],
+      label: "Getting started",
     },
     id: "welcome",
     position: { x: 120, y: 120 },
