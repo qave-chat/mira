@@ -7,7 +7,7 @@ const meta: Meta<typeof SessionDetail> = {
   component: SessionDetail,
   decorators: [
     (Story) => (
-      <div className="min-h-svh bg-background p-6">
+      <div className="h-svh bg-background p-6">
         <Story />
       </div>
     ),
