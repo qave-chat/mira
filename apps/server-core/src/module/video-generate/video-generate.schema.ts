@@ -2,14 +2,26 @@ import { Schema } from "effect";
 
 export const VideoGenerateStartInput = Schema.Struct({
   prompt: Schema.String,
-  photoKeys: Schema.Array(Schema.String),
+  scenes: Schema.Array(
+    Schema.Struct({
+      id: Schema.String,
+      screenshot: Schema.String,
+      reason: Schema.String,
+    }),
+  ),
 });
 export type VideoGenerateStartInput = typeof VideoGenerateStartInput.Type;
 
 export const VideoGenerateWorkflowInput = Schema.Struct({
   id: Schema.String,
   prompt: Schema.String,
-  photoKeys: Schema.Array(Schema.String),
+  scenes: Schema.Array(
+    Schema.Struct({
+      id: Schema.String,
+      screenshot: Schema.String,
+      reason: Schema.String,
+    }),
+  ),
 });
 export type VideoGenerateWorkflowInput = typeof VideoGenerateWorkflowInput.Type;
 

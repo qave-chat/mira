@@ -1,9 +1,5 @@
 import { Composition } from "remotion";
-import { VideoGenerateSlideshow } from "./slideshow";
-
-const FPS = 30;
-const SECONDS_PER_PHOTO = 5;
-const DEFAULT_PHOTO_COUNT = 1;
+import { FPS, INTRO_FRAMES, OUTRO_FRAMES, STEP_FRAMES, VideoGenerateSlideshow } from "./slideshow";
 
 export const RemotionRoot = () => {
   return (
@@ -13,11 +9,11 @@ export const RemotionRoot = () => {
       width={1920}
       height={1080}
       fps={FPS}
-      durationInFrames={DEFAULT_PHOTO_COUNT * SECONDS_PER_PHOTO * FPS}
-      defaultProps={{ prompt: "", photoUrls: [] }}
+      durationInFrames={INTRO_FRAMES + STEP_FRAMES + OUTRO_FRAMES}
+      defaultProps={{ title: "", subtitle: "", backgroundImageUrls: [], scenes: [] }}
       calculateMetadata={({ props }) => ({
         durationInFrames:
-          Math.max(props.photoUrls.length, DEFAULT_PHOTO_COUNT) * SECONDS_PER_PHOTO * FPS,
+          INTRO_FRAMES + Math.max(props.scenes.length, 1) * STEP_FRAMES + OUTRO_FRAMES,
       })}
     />
   );

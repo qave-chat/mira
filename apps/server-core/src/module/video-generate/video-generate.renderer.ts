@@ -38,10 +38,29 @@ export class VideoGenerateRenderer extends Context.Service<VideoGenerateRenderer
 
       const render = Effect.fn("VideoGenerateRenderer.render")(function* (input: {
         readonly id: string;
-        readonly prompt: string;
-        readonly photoUrls: ReadonlyArray<string>;
+        readonly title: string;
+        readonly subtitle: string;
+        readonly backgroundImageUrls?: ReadonlyArray<string>;
+        readonly scenes: ReadonlyArray<{
+          readonly id: string;
+          readonly imageUrl: string;
+          readonly reason: string;
+          readonly index: number;
+          readonly direction?: {
+            readonly sceneType: "workflow" | "feature" | "result" | "share";
+            readonly motion: "push-in" | "pan" | "spotlight" | "hold";
+            readonly callout: "ring" | "arrow" | "pulse" | "magnify";
+            readonly calloutLabel: string;
+            readonly headline: string;
+          };
+        }>;
       }) {
-        const inputProps = { prompt: input.prompt, photoUrls: input.photoUrls };
+        const inputProps = {
+          title: input.title,
+          subtitle: input.subtitle,
+          backgroundImageUrls: input.backgroundImageUrls,
+          scenes: input.scenes,
+        };
         const outputLocation = path.join(outDir, `${input.id}.mp4`);
         yield* Effect.logInfo("video-generate.remotion.select-composition", { id: input.id });
         const composition = yield* Effect.tryPromise({

@@ -31,9 +31,9 @@ export class VideoGenerateService extends Context.Service<VideoGenerateService>(
         if (input.prompt.trim().length === 0) {
           return yield* new ErrorVideoGenerateInvalidInput({ message: "Prompt is required" });
         }
-        if (input.photoKeys.length === 0) {
+        if (input.scenes.length === 0) {
           return yield* new ErrorVideoGenerateInvalidInput({
-            message: "At least one photo key is required",
+            message: "At least one video scene is required",
           });
         }
         const now = yield* Clock.currentTimeMillis;
@@ -50,7 +50,7 @@ export class VideoGenerateService extends Context.Service<VideoGenerateService>(
           error: null,
         });
         const executionId = yield* VideoGenerateWorkflow.execute(
-          { id, prompt: input.prompt, photoKeys: input.photoKeys },
+          { id, prompt: input.prompt, scenes: input.scenes },
           { discard: true },
         ).pipe(Effect.provideService(WorkflowEngine.WorkflowEngine, workflowEngine));
         yield* repo.updateById(id, { executionId });

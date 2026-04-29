@@ -124,7 +124,7 @@ function SessionDetailRoute() {
     const exit = await startVideoGenerate({
       payload: {
         prompt: selectedPlan.intent,
-        photoKeys: selectedPlan.exploration.map((item) => item.screenshot),
+        scenes: createVideoScenes(selectedPlan),
       },
     });
     if (Exit.isFailure(exit)) {
@@ -217,4 +217,36 @@ function SessionDetailRoute() {
       </div>
     </ModuleLayout>
   );
+}
+
+function createVideoScenes(plan: Plan) {
+  type VideoScene = { readonly id: string; readonly screenshot: string; readonly reason: string };
+  const scenes: VideoScene[] = plan.exploration.map((item, index) => ({
+    id: `step-${index + 1}`,
+    screenshot: item.screenshot,
+    reason: item.reason,
+  }));
+  if (plan.links.length === 0) {
+    return scenes;
+  }
+
+  const sceneById = new Map(scenes.map((scene) => [scene.id, scene]));
+  const targets = new Set(plan.links.map((link) => link.to));
+  const start = scenes.find((scene) => !targets.has(scene.id)) ?? scenes[0];
+  if (!start) {
+    return scenes;
+  }
+
+  const ordered: VideoScene[] = [];
+  const visited = new Set<string>();
+  let current: VideoScene | undefined = start;
+  while (current && !visited.has(current.id)) {
+    const currentScene: VideoScene = current;
+    ordered.push(currentScene);
+    visited.add(currentScene.id);
+    const nextId: string | undefined = plan.links.find((link) => link.from === currentScene.id)?.to;
+    current = nextId ? sceneById.get(nextId) : undefined;
+  }
+
+  return ordered.length === scenes.length ? ordered : scenes;
 }
