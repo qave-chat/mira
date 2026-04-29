@@ -6,6 +6,11 @@ import { AuthHttpGroup } from "./auth/auth.http.contract";
 
 export { AuthHttpGroup } from "./auth/auth.http.contract";
 export { HealthHttpGroup } from "../module/health/health.http.contract";
+export {
+  ErrorGeneratedVideoNotFound,
+  ErrorShareInvalidInput,
+  ErrorShareNotFound,
+} from "../module/share/share.error";
 export { ShareHttpGroup } from "../module/share/share.http.contract";
 export { SessionsHttpGroup } from "../module/sessions/sessions.http.contract";
 
