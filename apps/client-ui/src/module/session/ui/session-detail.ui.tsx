@@ -1,7 +1,6 @@
 import {
   Background,
   BackgroundVariant,
-  Controls,
   type Edge,
   Handle,
   MiniMap,
@@ -20,15 +19,19 @@ import {
 import "@xyflow/react/dist/style.css";
 import {
   AudioLinesIcon,
+  HandIcon,
+  MaximizeIcon,
+  MinusIcon,
   MousePointer2Icon,
-  NavigationIcon,
   PaperclipIcon,
+  PlusIcon,
   SendIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { SessionImagePreviewDialog } from "@/module/session/ui/session-image-preview-dialog.ui";
 import { useTheme } from "@/shared/provider/theme.provider";
 import { Button } from "@/shared/ui/button.ui";
+import { cn } from "@/shared/util/cn.util";
 
 type WorkflowImageAttachment = {
   id: string;
@@ -109,7 +112,7 @@ type PlaceholderNodeType = Node<WelcomeNodeData, "placeholder">;
 type SessionNode = PlaceholderNodeType | WelcomeNodeType;
 type CanvasMode = "navigate" | "select";
 
-function WelcomeNode({ id, data }: NodeProps<SessionNode>) {
+function WelcomeNode({ id, data, selected }: NodeProps<SessionNode>) {
   const { deleteElements } = useReactFlow<SessionNode, Edge>();
 
   function deleteNode(event: React.MouseEvent<HTMLButtonElement>) {
@@ -118,7 +121,13 @@ function WelcomeNode({ id, data }: NodeProps<SessionNode>) {
   }
 
   return (
-    <div className="relative min-w-64 rounded-xl border border-neutral-300 bg-neutral-100 p-5 pr-12 text-neutral-950 shadow-xl shadow-black/15 ring-1 ring-black/5 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:shadow-black/35 dark:ring-white/5">
+    <div
+      className={cn(
+        "relative min-w-64 rounded-xl border border-neutral-300 bg-neutral-100 p-5 pr-12 text-neutral-950 shadow-xl shadow-black/15 ring-1 ring-black/5 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-50 dark:shadow-black/35 dark:ring-white/5",
+        selected &&
+          "border-primary ring-2 ring-primary/70 ring-offset-2 ring-offset-background dark:border-primary dark:ring-primary/80",
+      )}
+    >
       <Handle type="target" position={Position.Left} className="opacity-0" />
       <Handle type="source" position={Position.Right} className="opacity-0" />
       <button
@@ -625,6 +634,7 @@ export function SessionDetail({
   return (
     <section
       data-slot="session-detail"
+      data-canvas-mode={canvasMode}
       className="relative h-full min-h-0 w-full overflow-hidden bg-background text-card-foreground"
     >
       <ReactFlow
@@ -657,7 +667,6 @@ export function SessionDetail({
           size={3}
           color={resolvedTheme === "dark" ? "rgba(158, 180, 216, 0.55)" : "rgba(82, 82, 91, 0.28)"}
         />
-        <Controls showInteractive position="bottom-left" />
         <MiniMap
           pannable
           zoomable
@@ -670,22 +679,50 @@ export function SessionDetail({
             <Button
               type="button"
               variant={canvasMode === "navigate" ? "secondary" : "ghost"}
-              size="sm"
+              size="icon"
+              aria-label="Navigate canvas"
               aria-pressed={canvasMode === "navigate"}
               onClick={() => setCanvasMode("navigate")}
             >
-              <NavigationIcon />
-              Nav
+              <HandIcon />
             </Button>
             <Button
               type="button"
               variant={canvasMode === "select" ? "secondary" : "ghost"}
-              size="sm"
+              size="icon"
+              aria-label="Select nodes"
               aria-pressed={canvasMode === "select"}
               onClick={() => setCanvasMode("select")}
             >
               <MousePointer2Icon />
-              Select
+            </Button>
+            <div className="mx-1 w-px bg-border" />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Zoom in"
+              onClick={() => void reactFlowInstance?.zoomIn()}
+            >
+              <PlusIcon />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Zoom out"
+              onClick={() => void reactFlowInstance?.zoomOut()}
+            >
+              <MinusIcon />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Fit view"
+              onClick={() => reactFlowInstance?.fitView({ padding: 0.2 })}
+            >
+              <MaximizeIcon />
             </Button>
           </div>
         </Panel>
