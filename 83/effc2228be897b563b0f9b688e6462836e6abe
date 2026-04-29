@@ -1,0 +1,28 @@
+apps/client-ui/src/module/session/ui/session-image-preview-dialog.ui.story.tsx
+  a8ca225696597d20 1-40
+apps/client-ui/src/module/session/ui/session-detail.ui.tsx
+  a8ca225696597d20 17,19,31-36,162,177,228-233,239,263-268,424-428,535,540-548,550-555,620
+apps/client-ui/src/module/session/ui/session-image-preview-dialog.ui.tsx
+  a8ca225696597d20 1-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "83effc2228be897b563b0f9b688e6462836e6abe",
+  "prompts": {
+    "a8ca225696597d20": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_228af3194ffeYy0zILTCFGZ4Aq",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 163,
+      "total_deletions": 31,
+      "accepted_lines": 153,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/96310b72b6e2c9e4dc53f42b3ee8e8fca99ca1e45668d1520358f8d8fe991e1f"
+    }
+  }
+}
