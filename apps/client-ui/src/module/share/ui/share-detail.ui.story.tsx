@@ -9,7 +9,7 @@ const meta: Meta<typeof ShareDetail> = {
       id: "share-1042",
       generatedVideoId: "generated-video-1042",
       sourceUrl: "https://example.com/product-launch.mp4",
-      videoUrl: "https://example.com/product-launch.mp4",
+      videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
       status: "ready",
       createdAt: 1_777_000_000_000,
     },

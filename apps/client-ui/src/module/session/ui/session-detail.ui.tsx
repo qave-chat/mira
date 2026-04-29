@@ -212,10 +212,7 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
     closeContextMenu();
   }
 
-  async function attachImages(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? []).filter((file) =>
-      file.type.startsWith("image/"),
-    );
+  async function uploadImages(files: File[]) {
     if (files.length === 0) {
       return;
     }
@@ -250,8 +247,23 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
       setUploadError(error instanceof Error ? error.message : "Image upload failed");
     } finally {
       setIsUploadingImages(false);
-      event.target.value = "";
     }
+  }
+
+  async function attachImages(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = getImageFiles(event.target.files ?? []);
+    await uploadImages(files);
+    event.target.value = "";
+  }
+
+  function pasteImages(event: React.ClipboardEvent<HTMLFormElement>) {
+    const files = getImageFiles(event.clipboardData.files);
+    if (files.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+    void uploadImages(files);
   }
 
   function removeAttachment(id: string) {
@@ -493,6 +505,7 @@ export function SessionDetail({ sessionId, onPlanCreated }: SessionDetailProps) 
       <form
         data-slot="session-workflow-composer"
         className="absolute inset-x-3 bottom-3 z-10 mx-auto max-w-3xl rounded-2xl border border-border bg-background/95 p-3 shadow-xl shadow-black/15 ring-1 ring-foreground/10 backdrop-blur sm:inset-x-6 sm:bottom-6"
+        onPaste={pasteImages}
         onSubmit={generatePlan}
       >
         {attachments.length > 0 ? (
@@ -649,6 +662,10 @@ function appendTranscript(current: string, transcript: string) {
   }
 
   return `${trimmed} ${transcript}`;
+}
+
+function getImageFiles(files: Iterable<File>) {
+  return Array.from(files).filter((file) => file.type.startsWith("image/"));
 }
 
 async function readUploadError(response: Response) {
