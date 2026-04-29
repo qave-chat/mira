@@ -1,5 +1,5 @@
 import { index, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
-import type { PlanExplorationItem } from "./plans.schema";
+import type { PlanExplorationItem, PlanLink } from "./plans.schema";
 
 export const plans = pgTable(
   "plans",
@@ -8,6 +8,7 @@ export const plans = pgTable(
     sessionId: text("session_id").notNull(),
     userId: text("user_id").notNull(),
     exploration: jsonb("exploration").$type<ReadonlyArray<PlanExplorationItem>>().notNull(),
+    links: jsonb("links").$type<ReadonlyArray<PlanLink>>().notNull().default([]),
     intent: text("intent").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

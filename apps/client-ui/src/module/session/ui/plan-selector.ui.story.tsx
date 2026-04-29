@@ -12,6 +12,7 @@ const plans: ReadonlyArray<Plan> = [
       { screenshot: "s3://mira/source.png", reason: "Hero frame has the clearest product moment" },
       { screenshot: "s3://mira/detail.png", reason: "Close-up supports a benefits callout" },
     ],
+    links: [{ from: "step-1", to: "step-2" }],
     intent:
       "Create a concise launch walkthrough that highlights the source, render, and share flow.",
     createdAt: Date.UTC(2026, 3, 29, 12, 0, 0),
@@ -22,6 +23,7 @@ const plans: ReadonlyArray<Plan> = [
     sessionId: "ses_381nfd6tRUkJ61kxHLfCsp4YjX8",
     userId: "usr_test",
     exploration: [{ screenshot: "s3://mira/alt.png", reason: "Better pacing for social edits" }],
+    links: [],
     intent: "Make a short social teaser focused on speed and final output quality.",
     createdAt: Date.UTC(2026, 3, 28, 17, 30, 0),
     updatedAt: Date.UTC(2026, 3, 28, 17, 30, 0),

@@ -45,6 +45,9 @@ function SessionDetailRoute() {
   const startVideoGenerate = useAtomSet(RpcClient.mutation("VideoGenerateStart"), {
     mode: "promiseExit",
   });
+  const updatePlan = useAtomSet(RpcClient.mutation("PlanUpdate"), {
+    mode: "promiseExit",
+  });
   const sessionResult = useAtomValue(
     HttpClient.query("sessions", "get", {
       params: { id: sessionId },
@@ -161,6 +164,14 @@ function SessionDetailRoute() {
     refreshPlans();
   }
 
+  async function handlePlanUpdated(input: Pick<Plan, "id" | "exploration" | "links">) {
+    const exit = await updatePlan({ payload: input });
+    if (Exit.isFailure(exit)) {
+      throw new Error(Cause.pretty(exit.cause));
+    }
+    refreshPlans();
+  }
+
   return (
     <ModuleLayout>
       <ModuleLayoutHeader>
@@ -196,7 +207,13 @@ function SessionDetailRoute() {
         </ModuleLayoutActions>
       </ModuleLayoutHeader>
       <div className="min-h-0 w-full flex-1">
-        <SessionDetail sessionId={sessionId} onPlanCreated={handlePlanCreated} />
+        <SessionDetail
+          plan={selectedPlan}
+          plans={plans}
+          sessionId={sessionId}
+          onPlanCreated={handlePlanCreated}
+          onPlanUpdated={handlePlanUpdated}
+        />
       </div>
     </ModuleLayout>
   );

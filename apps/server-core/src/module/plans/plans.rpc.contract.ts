@@ -3,7 +3,7 @@ import { Rpc, RpcGroup } from "effect/unstable/rpc";
 import { ErrorSessionNotFound } from "../sessions/sessions.error";
 import { ErrorRpcUnauthorized } from "../../platform/auth/rpc-auth.error";
 import { ErrorPlanNotFound } from "./plans.error";
-import { Plan, PlanCreatePayload } from "./plans.schema";
+import { Plan, PlanCreatePayload, PlanUpdatePayload } from "./plans.schema";
 
 export class PlanCreate extends Rpc.make("PlanCreate", {
   payload: PlanCreatePayload,
@@ -23,4 +23,10 @@ export class PlanGet extends Rpc.make("PlanGet", {
   error: Schema.Union([ErrorPlanNotFound, ErrorRpcUnauthorized]),
 }) {}
 
-export const PlanRpcs = RpcGroup.make(PlanCreate, PlanList, PlanGet);
+export class PlanUpdate extends Rpc.make("PlanUpdate", {
+  payload: PlanUpdatePayload,
+  success: Plan,
+  error: Schema.Union([ErrorPlanNotFound, ErrorRpcUnauthorized]),
+}) {}
+
+export const PlanRpcs = RpcGroup.make(PlanCreate, PlanList, PlanGet, PlanUpdate);

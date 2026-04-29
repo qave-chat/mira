@@ -1,5 +1,11 @@
 import { Clock, Context, Effect, Layer } from "effect";
-import type { Plan, PlanCreatePayload, PlanInsertRow, PlanRow } from "./plans.schema";
+import type {
+  Plan,
+  PlanCreatePayload,
+  PlanInsertRow,
+  PlanRow,
+  PlanUpdatePayload,
+} from "./plans.schema";
 import { ErrorPlanNotFound } from "./plans.error";
 import { PlansRepo } from "./plans.repo";
 import { SessionsService } from "../sessions/sessions.service";
@@ -28,6 +34,7 @@ export class PlansService extends Context.Service<PlansService>()("module/PlansS
         sessionId: input.sessionId,
         userId: input.userId,
         exploration: input.exploration,
+        links: input.links ?? createSequentialLinks(input.exploration.length),
         intent: input.intent,
       };
       const row = yield* repo.insert(plan);
@@ -57,7 +64,28 @@ export class PlansService extends Context.Service<PlansService>()("module/PlansS
       return toPlan(row);
     }, withModuleLogs);
 
-    return { create, list, get } as const;
+    const update = Effect.fn("PlansService.update")(function* (
+      input: PlanUpdatePayload & { readonly userId: string },
+    ) {
+      yield* Effect.annotateCurrentSpan({ "plan.id": input.id, "user.id": input.userId });
+      const existing = yield* repo.getById(input.id);
+      if (!existing || existing.userId !== input.userId) {
+        return yield* new ErrorPlanNotFound({ id: input.id });
+      }
+
+      const row = yield* repo.updateById(input.id, {
+        exploration: input.exploration,
+        links: input.links,
+      });
+      if (!row) {
+        return yield* new ErrorPlanNotFound({ id: input.id });
+      }
+
+      yield* Effect.logInfo("plan.updated");
+      return toPlan(row);
+    }, withModuleLogs);
+
+    return { create, list, get, update } as const;
   }),
 }) {}
 
@@ -99,8 +127,16 @@ function toPlan(row: PlanRow): Plan {
     sessionId: row.sessionId,
     userId: row.userId,
     exploration: row.exploration,
+    links: row.links,
     intent: row.intent,
     createdAt: row.createdAt.getTime(),
     updatedAt: row.updatedAt.getTime(),
   };
+}
+
+function createSequentialLinks(count: number) {
+  return Array.from({ length: Math.max(0, count - 1) }, (_, index) => ({
+    from: `step-${index + 1}`,
+    to: `step-${index + 2}`,
+  }));
 }
