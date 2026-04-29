@@ -42,6 +42,7 @@ export function SessionList({ sessions }: SessionListProps) {
                     <Link
                       to="/sessions/$sessionId"
                       params={{ sessionId: session.id }}
+                      search={{ name: session.name }}
                       className="text-primary underline-offset-4 hover:underline"
                     >
                       {session.name}

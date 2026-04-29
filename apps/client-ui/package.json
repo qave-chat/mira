@@ -22,6 +22,7 @@
     "@mira/server-core": "workspace:*",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-router": "^1.168.22",
+    "@xyflow/react": "^12.10.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "effect": "beta",

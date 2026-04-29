@@ -1,5 +1,6 @@
 import { Context, Effect, Schema } from "effect";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
+import type { sessions } from "../module/sessions/sessions.table";
 import type { account, session, user, verification } from "./auth/auth.table";
 
 export class ErrorDb extends Schema.TaggedErrorClass<ErrorDb>()("ErrorDb", {
@@ -12,6 +13,7 @@ export type DbSchema = {
   session: typeof session;
   account: typeof account;
   verification: typeof verification;
+  sessions: typeof sessions;
 };
 export type DbClient = PgDatabase<PgQueryResultHKT, DbSchema>;
 

@@ -148,16 +148,23 @@ export function ModuleLayoutActions({ className, ...props }: ModuleLayoutActions
   );
 }
 
-export type ModuleLayoutBodyProps = React.ComponentProps<typeof ScrollArea>;
+export type ModuleLayoutBodyProps = React.ComponentProps<typeof ScrollArea> & {
+  contentClassName?: string;
+};
 
-export function ModuleLayoutBody({ className, children, ...props }: ModuleLayoutBodyProps) {
+export function ModuleLayoutBody({
+  className,
+  contentClassName,
+  children,
+  ...props
+}: ModuleLayoutBodyProps) {
   return (
     <ScrollArea
       data-slot="module-layout-body"
       className={cn("min-h-0 flex-1", className)}
       {...props}
     >
-      <div className="flex min-h-full flex-col gap-4 p-6">{children}</div>
+      <div className={cn("flex min-h-full flex-col gap-4 p-6", contentClassName)}>{children}</div>
     </ScrollArea>
   );
 }

@@ -1,82 +1,97 @@
-import { Button } from "@/shared/ui/button.ui";
-import { Input } from "@/shared/ui/input.ui";
-import { ModuleLayoutTitle } from "@/shared/ui/module-layout.ui";
+import {
+  Background,
+  BackgroundVariant,
+  Controls,
+  type Edge,
+  MiniMap,
+  type Node,
+  type NodeProps,
+  ReactFlow,
+  useEdgesState,
+  useNodesState,
+  useReactFlow,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 
-export type SessionDetailProps = {
-  sessionId: string;
-  sourceUrl: string;
-  generatedVideoUrl?: string;
-  isGenerating: boolean;
-  isSharing: boolean;
-  error?: string | null;
-  onSourceUrlChange: (value: string) => void;
-  onGenerateVideo: () => void;
-  onShare: () => void;
+type WelcomeNodeData = {
+  label: string;
 };
 
-export function SessionDetail({
-  sessionId,
-  sourceUrl,
-  generatedVideoUrl,
-  isGenerating,
-  isSharing,
-  error,
-  onSourceUrlChange,
-  onGenerateVideo,
-  onShare,
-}: SessionDetailProps) {
-  const hasGeneratedVideo = Boolean(generatedVideoUrl);
+type WelcomeNodeType = Node<WelcomeNodeData, "welcome">;
+
+function WelcomeNode({ id, data }: NodeProps<WelcomeNodeType>) {
+  const { deleteElements } = useReactFlow();
+
+  function deleteNode(event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+    void deleteElements({ nodes: [{ id }] });
+  }
+
+  return (
+    <div className="relative min-w-64 rounded-xl border border-[#c9a96b] bg-[#f0e0bd] p-5 pr-12 text-[#141413] shadow-xl shadow-black/30 ring-2 ring-[#c9a96b]/40">
+      <button
+        type="button"
+        aria-label="Delete welcome node"
+        className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-md text-[#141413]/70 hover:bg-[#141413]/10 hover:text-[#141413]"
+        onClick={deleteNode}
+      >
+        x
+      </button>
+      <div className="text-base font-semibold">{data.label}</div>
+    </div>
+  );
+}
+
+const nodeTypes = {
+  welcome: WelcomeNode,
+};
+
+const initialNodes = [
+  {
+    data: {
+      label: "Welcome to the graph",
+    },
+    id: "welcome",
+    position: { x: 120, y: 120 },
+    type: "welcome",
+  },
+] satisfies WelcomeNodeType[];
+
+const initialEdges = [] satisfies Edge[];
+
+export function SessionDetail() {
+  const [nodes, , onNodesChange] = useNodesState(initialNodes);
+  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
 
   return (
     <section
       data-slot="session-detail"
-      className="space-y-6 rounded-lg border bg-card p-6 text-card-foreground shadow-sm"
+      className="relative h-full min-h-0 w-full overflow-hidden bg-card text-card-foreground"
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <ModuleLayoutTitle className="text-lg">Session {sessionId}</ModuleLayoutTitle>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Session details will appear here once sessions are backed by data.
-          </p>
-        </div>
-        {hasGeneratedVideo ? (
-          <Button type="button" onClick={onShare} disabled={isSharing}>
-            {isSharing ? "Sharing..." : "Share"}
-          </Button>
-        ) : null}
-      </div>
-
-      <div
-        data-slot="session-video-generate"
-        className="space-y-3 rounded-lg border bg-background p-4"
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        nodeTypes={nodeTypes}
+        defaultViewport={{ x: 48, y: 48, zoom: 1 }}
+        minZoom={0.2}
+        maxZoom={2.5}
+        panOnDrag
+        zoomOnDoubleClick
+        zoomOnPinch
+        zoomOnScroll
+        className="[&_.react-flow__controls-button]:border-border [&_.react-flow__controls-button]:bg-card [&_.react-flow__controls-button]:fill-foreground [&_.react-flow__controls-button]:text-foreground [&_.react-flow__controls-button:hover]:bg-muted [&_.react-flow__minimap]:border [&_.react-flow__minimap]:border-border [&_.react-flow__minimap]:bg-card"
       >
-        <div className="space-y-1">
-          <label className="text-sm font-medium" htmlFor="session-source-url">
-            Video URL
-          </label>
-          <Input
-            id="session-source-url"
-            value={sourceUrl}
-            placeholder="https://example.com/video.mp4"
-            onChange={(event) => onSourceUrlChange(event.currentTarget.value)}
-          />
-        </div>
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        {!hasGeneratedVideo ? (
-          <Button type="button" onClick={onGenerateVideo} disabled={isGenerating}>
-            {isGenerating ? "Generating..." : "Generate video"}
-          </Button>
-        ) : null}
-      </div>
-
-      {generatedVideoUrl ? (
-        <div
-          data-slot="session-generated-video"
-          className="overflow-hidden rounded-lg border bg-black"
-        >
-          <video className="aspect-video w-full" src={generatedVideoUrl} controls playsInline />
-        </div>
-      ) : null}
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={24}
+          size={3}
+          color="rgba(158, 180, 216, 0.55)"
+        />
+        <Controls showInteractive position="bottom-left" />
+        <MiniMap pannable zoomable />
+      </ReactFlow>
     </section>
   );
 }
