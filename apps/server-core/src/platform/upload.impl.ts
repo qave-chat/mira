@@ -36,11 +36,7 @@ export const UploadLive = HttpRouter.use((router) =>
         );
       }
 
-      const webRequest = new Request(request.url, {
-        body: request.source as never,
-        headers,
-        method: request.method,
-      });
+      const webRequest = yield* HttpServerRequest.toWeb(request);
       const formData = yield* Effect.tryPromise({
         try: () => webRequest.formData(),
         catch: (cause) => cause,
