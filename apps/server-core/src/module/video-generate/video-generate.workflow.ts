@@ -1,17 +1,18 @@
 import { Effect, Option, Redacted, Schema } from "effect";
 import { Workflow } from "effect/unstable/workflow";
+import { Buffer } from "node:buffer";
 import { R2 } from "../../platform/r2.contract";
 import { VideoGenerateRenderer } from "./video-generate.renderer";
 import { VideoGenerateRepo } from "./video-generate.repo";
 import { VideoGenerateWorkflowInput, VideoGenerateWorkflowResult } from "./video-generate.schema";
 
 const PHOTO_URL_EXPIRES_IN_SECONDS = 60 * 60;
+const BACKGROUND_URL_EXPIRES_IN_SECONDS = 60 * 60;
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
+const OPENAI_IMAGES_URL = "https://api.openai.com/v1/images/generations";
 const OPENAI_VIDEO_MODEL = "gpt-5.5";
-const PAINTING_BACKGROUND_URLS = [
-  "https://unsplash.com/photos/VsnDYMWollM/download?force=true&w=1920",
-  "https://unsplash.com/photos/8wcoY3wcbL0/download?force=true&w=1920",
-] as const;
+const OPENAI_BACKGROUND_IMAGE_MODEL = "gpt-image-1";
+const BACKGROUND_IMAGE_COUNT = 2;
 
 const encodeJson = (value: unknown) => {
   // oxlint-disable-next-line effect-local/no-json-parse -- OpenAI HTTP APIs require JSON request bodies.
@@ -39,6 +40,12 @@ type OpenAiResponse = {
   readonly output?: ReadonlyArray<{
     readonly type?: string;
     readonly result?: string;
+  }>;
+};
+
+type OpenAiImageResponse = {
+  readonly data?: ReadonlyArray<{
+    readonly b64_json?: string;
   }>;
 };
 
@@ -94,11 +101,23 @@ export const VideoGenerateWorkflowLive = VideoGenerateWorkflow.toLayer((input) =
       ...scene,
       direction: creative.scenes[index],
     }));
+    const backgroundImageUrls = yield* generateBackgroundImages(
+      openAiApiKey,
+      r2,
+      input.id,
+      creative,
+    ).pipe(
+      Effect.catch((error: unknown) =>
+        Effect.logWarning("video-generate.background.generation.failed", {
+          error: String(error),
+          id: input.id,
+        }).pipe(Effect.as([] as ReadonlyArray<string>)),
+      ),
+    );
     yield* Effect.logInfo("video-generate.photos.signed", { id: input.id });
-    yield* Effect.logInfo("video-generate.hero-image.disabled", { id: input.id });
-    yield* Effect.logInfo("video-generate.background.painting", {
+    yield* Effect.logInfo("video-generate.background.generated", {
       id: input.id,
-      count: PAINTING_BACKGROUND_URLS.length,
+      count: backgroundImageUrls.length,
     });
     yield* repo
       .updateById(input.id, {
@@ -112,7 +131,7 @@ export const VideoGenerateWorkflowLive = VideoGenerateWorkflow.toLayer((input) =
         id: input.id,
         title: creative.title,
         subtitle: creative.subtitle,
-        backgroundImageUrls: PAINTING_BACKGROUND_URLS,
+        backgroundImageUrls,
         scenes: directedScenes,
       })
       .pipe(Effect.mapError((error) => new ErrorVideoGenerateFailed({ message: error.message })));
@@ -198,6 +217,69 @@ function generateCreativePackage(
       catch: (cause) => cause,
     });
     return parseCreativeDirectionResponse(parsed, title, scenes);
+  });
+}
+
+function generateBackgroundImages(
+  apiKey: Option.Option<Redacted.Redacted<string>>,
+  r2: R2["Service"],
+  id: string,
+  creative: CreativePackage,
+) {
+  if (Option.isNone(apiKey)) {
+    return Effect.succeed([] as ReadonlyArray<string>);
+  }
+
+  return Effect.gen(function* () {
+    const response = yield* Effect.tryPromise({
+      try: () =>
+        fetch(OPENAI_IMAGES_URL, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${Redacted.value(apiKey.value)}`,
+            "Content-Type": "application/json",
+          },
+          body: encodeJson({
+            model: OPENAI_BACKGROUND_IMAGE_MODEL,
+            prompt: backgroundImagePrompt(creative),
+            n: BACKGROUND_IMAGE_COUNT,
+            size: "1536x1024",
+          }),
+        }),
+      catch: (cause) => cause,
+    });
+    if (!response.ok) {
+      yield* Effect.logWarning("video-generate.background.openai.failed", {
+        body: yield* Effect.tryPromise({
+          try: () => response.text(),
+          catch: (cause) => cause,
+        }).pipe(Effect.catch(() => Effect.succeed(""))),
+        id,
+        status: response.status,
+      });
+      return [] as ReadonlyArray<string>;
+    }
+    const openai: OpenAiImageResponse = yield* Effect.tryPromise({
+      try: () => response.json() as Promise<OpenAiImageResponse>,
+      catch: (cause) => cause,
+    });
+    const images = (openai.data ?? []).flatMap((image) =>
+      image.b64_json && image.b64_json.length > 0 ? [image.b64_json] : [],
+    );
+    return yield* Effect.forEach(images, (image, index) =>
+      Effect.gen(function* () {
+        const key = `video-generate/backgrounds/${id}-${index}.png`;
+        yield* r2.putObject({
+          key,
+          body: Buffer.from(image, "base64"),
+          contentType: "image/png",
+        });
+        return yield* r2.signGetObject({
+          key,
+          expiresInSeconds: BACKGROUND_URL_EXPIRES_IN_SECONDS,
+        });
+      }),
+    );
   });
 }
 
@@ -421,4 +503,11 @@ Use exactly ${scenes.length} scenes in the same order.
 Original user request: ${title}
 Steps:
 ${scenes.map((scene, index) => `${index + 1}. ${scene.reason}`).join("\n")}`;
+}
+
+function backgroundImagePrompt(creative: CreativePackage) {
+  return `Create an abstract editorial painting background for a dark product demo video titled "${creative.title}".
+Style: rich blue, ink, off-white, and charcoal painterly texture; restrained, premium, modern software launch mood; visible brush grain; no gradients, no purple glow, no orange, no text, no logos, no UI, no people, no devices.
+Composition: wide cinematic canvas with interesting detail on the left, darker quiet negative space on the right so white product copy remains readable.
+Context: ${creative.subtitle}`;
 }
