@@ -1,0 +1,130 @@
+apps/server-core/src/module/sessions/sessions.schema.ts
+  3093cd17cdfcc15b 18-28
+apps/server-core/src/module/sessions/sessions.workflow.ts
+  3093cd17cdfcc15b 1-44
+apps/server-core/src/module/sessions/sessions.http.impl.ts
+  3093cd17cdfcc15b 52-60
+apps/client-ui/src/module/session/session.route.tsx
+  3093cd17cdfcc15b 30-32,34,59-71,91-95
+apps/server-core/src/platform/http.impl.ts
+  3093cd17cdfcc15b 7,11,33,35
+apps/server-core/src/main.ts
+  3093cd17cdfcc15b 12,39-43,51,61,64-69
+apps/client-ui/src/module/session/ui/session-list.ui.story.tsx
+  3093cd17cdfcc15b 26,45-47
+apps/client-ui/src/module/share/ui/share-detail.ui.story.tsx
+  e61571031ef6a564 1,3,6-70,74-76,87-173
+  a8ca225696597d20 72
+apps/client-ui/src/shared/ui/select.ui.tsx
+  552dc3af6eb7e4d4 1-187
+apps/client-ui/src/module/session/ui/session-delete-alert-dialog.ui.tsx
+  3093cd17cdfcc15b 1-72
+apps/client-ui/src/module/share/ui/share-detail.ui.tsx
+  e61571031ef6a564 31-33,47,50-62,80,105-107,131,134-139,146,149-153,163-165
+apps/server-core/src/module/plans/plans.repo.ts
+  3093cd17cdfcc15b 33-38
+apps/server-core/src/module/sessions/sessions.service.test.ts
+  3093cd17cdfcc15b 5,17
+apps/client-ui/src/module/session/ui/session-image-preview-dialog.ui.story.tsx
+  a8ca225696597d20 9,41-58
+apps/client-ui/src/module/session/ui/session-image-preview-dialog.ui.tsx
+  a8ca225696597d20 36-44,46
+apps/client-ui/src/module/session/ui/session-delete-alert-dialog.ui.story.tsx
+  3093cd17cdfcc15b 1-34
+apps/client-ui/src/module/session/ui/session-list.ui.tsx
+  3093cd17cdfcc15b 2,12-13,16,34,39-74,77
+apps/server-core/src/module/sessions/sessions.http.contract.ts
+  3093cd17cdfcc15b 18-23
+apps/server-core/src/platform/r2.contract.ts
+  3093cd17cdfcc15b 19-22,26
+apps/server-core/src/module/sessions/sessions.repo.ts
+  3093cd17cdfcc15b 33-39
+apps/client-ui/src/module/session/ui/plan-selector.ui.tsx
+  552dc3af6eb7e4d4 4-10,102,104-108,110-124
+apps/client-ui/src/index.css
+  67f1547dd8a6a5f7 103,129,159
+apps/client-ui/src/shared/ui/select.ui.story.tsx
+  552dc3af6eb7e4d4 1-12,14-73
+  a8ca225696597d20 13
+apps/server-core/src/module/sessions/sessions.service.ts
+  3093cd17cdfcc15b 2-3,12,61-82
+apps/server-core/src/platform/r2.impl.ts
+  3093cd17cdfcc15b 1-6,68-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "71f02ffd45165aad37c51287e59bf2ce8b6652a3",
+  "prompts": {
+    "3093cd17cdfcc15b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_22893efedffe5lsHKEu08Gfitk",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 399,
+      "total_deletions": 106,
+      "accepted_lines": 323,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/a8fc103c14bc69e102049461a343449a31301e50f9cbb51a1d3e2f7cbe0216c2"
+    },
+    "552dc3af6eb7e4d4": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_2288588b9ffeJ1jbD6VtM7mMwH",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 506,
+      "total_deletions": 30,
+      "accepted_lines": 287,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/2f4bbd767182f050b3404a4732effbc0d9ef371111fcdef65d54f5e71950f74e"
+    },
+    "67f1547dd8a6a5f7": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_22884e516ffeKgd2b0yPIcE6EV",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 3,
+      "accepted_lines": 3,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/11e665e89ba2340866447635b3296109f26dcb1d8ebbc3bf3d4768f3009ec237"
+    },
+    "a8ca225696597d20": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_228af3194ffeYy0zILTCFGZ4Aq",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 7,
+      "accepted_lines": 31,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/ec901a9ae8a42f10ad4ba3b61f096495165707e22e8f69cf4209ec04875256f7"
+    },
+    "e61571031ef6a564": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_22893559effeettk3DXzMGgITP",
+        "model": "openai/gpt-5.5"
+      },
+      "human_author": "Kevin",
+      "messages": [],
+      "total_additions": 211,
+      "total_deletions": 49,
+      "accepted_lines": 210,
+      "overriden_lines": 0,
+      "messages_url": "https://usegitai.com/cas/1229fde127fe9fe79100c6a0da77de70db1d484b594f7c3f9746c72c2c2fd499"
+    }
+  }
+}
