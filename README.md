@@ -10,7 +10,6 @@ For the hackathon, we built a focused end-to-end loop where a user uploads scree
 
 ## Codex Usage
 
-- Workflow plan generation from user intent and screenshots.
-- Video creative direction: title, scenes, motion, callouts, and copy.
-- Supporting background image generation for rendered videos.
-- Realtime voice transcription in the message composer.
+- Workflow plan generation from user intent and screenshots. (GPT 5.5)
+- Video creative direction: title, scenes, motion, callouts, image backgrounds, and copy (GPT Image 2)
+- Realtime voice transcription in the message composer. (OpenAI Realtime ASR)
