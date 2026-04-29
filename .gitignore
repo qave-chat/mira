@@ -8,5 +8,4 @@ cdk.out
 .env
 .env.*
 !.env.example
-!.env.local
 apps/client-ui/.tanstack/tmp

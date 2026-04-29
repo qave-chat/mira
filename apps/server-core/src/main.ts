@@ -12,6 +12,7 @@ import { VideoGenerateLive } from "./module/video-generate/video-generate.rpc.im
 import { VideoGenerateRendererLive } from "./module/video-generate/video-generate.renderer";
 import { VideoGenerateServiceLive } from "./module/video-generate/video-generate.service";
 import { VideoGenerateWorkflowLive } from "./module/video-generate/video-generate.workflow";
+import { AsrLive } from "./platform/asr.impl";
 import { AuthCatchallLive } from "./platform/auth/auth.catchall";
 import { AuthLive } from "./platform/auth/auth.impl";
 import { DbLive } from "./platform/db.impl";
@@ -42,7 +43,7 @@ const Handlers = Layer.mergeAll(HealthLive, VideoGenerateLayers, PlansLayers);
 
 const AuthRoutes = AuthCatchallLive.pipe(Layer.provide(AuthLive), Layer.provide(DbLive));
 
-const HttpRoutes = Layer.mergeAll(AuthRoutes, HttpApiLive, StaticLive);
+const HttpRoutes = Layer.mergeAll(AuthRoutes, AsrLive, HttpApiLive, StaticLive);
 
 const AppLive = Layer.mergeAll(
   // NDJSON instead of JSON so streaming RPCs (SessionEventsWatch) can frame
