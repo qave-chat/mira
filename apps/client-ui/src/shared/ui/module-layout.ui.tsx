@@ -43,9 +43,7 @@ export function ModuleLayoutSidebar({
             className="flex items-center gap-2 rounded-md hover:text-sidebar-accent-foreground"
           >
             <Logo />
-            <span className="text-sm font-medium group-data-[collapsible=icon]:hidden">
-              Mira
-            </span>
+            <span className="text-sm font-medium group-data-[collapsible=icon]:hidden">Mira</span>
           </Link>
           {headerExtra ? (
             <span className="flex items-center group-data-[collapsible=icon]:hidden">

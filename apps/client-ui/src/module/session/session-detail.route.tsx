@@ -6,23 +6,23 @@ import {
   ModuleLayoutTitle,
 } from "@/shared/ui/module-layout.ui";
 
-export const Route = createFileRoute("/company/$companyId")({
-  component: CompanyDetailRoute,
+export const Route = createFileRoute("/sessions/$sessionId")({
+  component: SessionDetailRoute,
 });
 
-function CompanyDetailRoute() {
-  const { companyId } = Route.useParams();
+function SessionDetailRoute() {
+  const { sessionId } = Route.useParams();
 
   return (
     <ModuleLayout>
       <ModuleLayoutHeader>
-        <ModuleLayoutTitle>Company</ModuleLayoutTitle>
+        <ModuleLayoutTitle>Session</ModuleLayoutTitle>
       </ModuleLayoutHeader>
       <ModuleLayoutBody>
         <section className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
-          <h2 className="text-lg font-semibold">Company {companyId}</h2>
+          <h2 className="text-lg font-semibold">Session {sessionId}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Details for this company will appear here once the module is wired to data.
+            Details for this session will appear here once the module is wired to data.
           </p>
         </section>
       </ModuleLayoutBody>

@@ -303,8 +303,7 @@ export function ParticleField({
     };
 
     const shuffleIndices = (n: number): number[] => {
-      const arr = new Array<number>(n);
-      for (let i = 0; i < n; i++) arr[i] = i;
+      const arr = Array.from({ length: n }, (_, i) => i);
       for (let i = n - 1; i > 0; i--) {
         const j = (Math.random() * (i + 1)) | 0;
         const tmp = arr[i];

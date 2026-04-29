@@ -10,7 +10,10 @@ const ApiRoutes = HttpApiBuilder.layer(HttpApiDef, {
   openapiPath: "/api/http/openapi.json",
 }).pipe(
   Layer.provide(
-    Layer.mergeAll(AuthHttpHandlers.pipe(Layer.provide(AuthLive), Layer.provide(DbLive)), HealthHttpHandlers),
+    Layer.mergeAll(
+      AuthHttpHandlers.pipe(Layer.provide(AuthLive), Layer.provide(DbLive)),
+      HealthHttpHandlers,
+    ),
   ),
 );
 

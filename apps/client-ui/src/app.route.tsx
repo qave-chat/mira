@@ -1,7 +1,7 @@
 import { createRootRoute, Outlet, redirect, useMatches, useRouter } from "@tanstack/react-router";
 import { useAtomSet } from "@effect/atom-react";
 import { Cause, Exit } from "effect";
-import { Building2Icon } from "lucide-react";
+import { CalendarDaysIcon } from "lucide-react";
 import { HttpClient } from "@mira/client-api/http-atom";
 import { AuthPopover } from "@/module/auth/ui/auth-popover.ui";
 import { HealthDot } from "@/module/health/health.ui";
@@ -90,10 +90,10 @@ function AuthenticatedLayout() {
         headerActions={<ThemeToggle resolvedTheme={resolvedTheme} onToggle={handleThemeToggle} />}
         navItems={[
           {
-            href: "/company",
-            label: "Companies",
-            icon: <Building2Icon />,
-            isActive: matches.some((m) => m.routeId.startsWith("/company")),
+            href: "/sessions",
+            label: "Sessions",
+            icon: <CalendarDaysIcon />,
+            isActive: matches.some((m) => m.routeId.startsWith("/sessions")),
           },
         ]}
       />

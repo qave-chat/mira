@@ -9,82 +9,82 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './app.route'
+import { Route as moduleSessionSessionDotrouteRouteImport } from './module/session/session.route'
 import { Route as moduleAuthAuthDotrouteRouteImport } from './module/auth/auth.route'
-import { Route as moduleCompanyCompanyDotrouteRouteImport } from './module/company/company.route'
 import { Route as moduleHomeHomeDotrouteRouteImport } from './module/home/home.route'
-import { Route as moduleCompanyCompanyDetailDotrouteRouteImport } from './module/company/company-detail.route'
+import { Route as moduleSessionSessionDetailDotrouteRouteImport } from './module/session/session-detail.route'
 
+const moduleSessionSessionDotrouteRoute =
+  moduleSessionSessionDotrouteRouteImport.update({
+    id: '/sessions',
+    path: '/sessions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const moduleAuthAuthDotrouteRoute = moduleAuthAuthDotrouteRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const moduleCompanyCompanyDotrouteRoute =
-  moduleCompanyCompanyDotrouteRouteImport.update({
-    id: '/company',
-    path: '/company',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const moduleHomeHomeDotrouteRoute = moduleHomeHomeDotrouteRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const moduleCompanyCompanyDetailDotrouteRoute =
-  moduleCompanyCompanyDetailDotrouteRouteImport.update({
-    id: '/company/$companyId',
-    path: '/company/$companyId',
+const moduleSessionSessionDetailDotrouteRoute =
+  moduleSessionSessionDetailDotrouteRouteImport.update({
+    id: '/sessions/$sessionId',
+    path: '/sessions/$sessionId',
     getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof moduleHomeHomeDotrouteRoute
-  '/company': typeof moduleCompanyCompanyDotrouteRoute
   '/login': typeof moduleAuthAuthDotrouteRoute
-  '/company/$companyId': typeof moduleCompanyCompanyDetailDotrouteRoute
+  '/sessions': typeof moduleSessionSessionDotrouteRoute
+  '/sessions/$sessionId': typeof moduleSessionSessionDetailDotrouteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof moduleHomeHomeDotrouteRoute
-  '/company': typeof moduleCompanyCompanyDotrouteRoute
   '/login': typeof moduleAuthAuthDotrouteRoute
-  '/company/$companyId': typeof moduleCompanyCompanyDetailDotrouteRoute
+  '/sessions': typeof moduleSessionSessionDotrouteRoute
+  '/sessions/$sessionId': typeof moduleSessionSessionDetailDotrouteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof moduleHomeHomeDotrouteRoute
-  '/company': typeof moduleCompanyCompanyDotrouteRoute
   '/login': typeof moduleAuthAuthDotrouteRoute
-  '/company/$companyId': typeof moduleCompanyCompanyDetailDotrouteRoute
+  '/sessions': typeof moduleSessionSessionDotrouteRoute
+  '/sessions/$sessionId': typeof moduleSessionSessionDetailDotrouteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/company' | '/login' | '/company/$companyId'
+  fullPaths: '/' | '/login' | '/sessions' | '/sessions/$sessionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/company' | '/login' | '/company/$companyId'
-  id: '__root__' | '/' | '/company' | '/login' | '/company/$companyId'
+  to: '/' | '/login' | '/sessions' | '/sessions/$sessionId'
+  id: '__root__' | '/' | '/login' | '/sessions' | '/sessions/$sessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   moduleHomeHomeDotrouteRoute: typeof moduleHomeHomeDotrouteRoute
-  moduleCompanyCompanyDotrouteRoute: typeof moduleCompanyCompanyDotrouteRoute
   moduleAuthAuthDotrouteRoute: typeof moduleAuthAuthDotrouteRoute
-  moduleCompanyCompanyDetailDotrouteRoute: typeof moduleCompanyCompanyDetailDotrouteRoute
+  moduleSessionSessionDotrouteRoute: typeof moduleSessionSessionDotrouteRoute
+  moduleSessionSessionDetailDotrouteRoute: typeof moduleSessionSessionDetailDotrouteRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sessions': {
+      id: '/sessions'
+      path: '/sessions'
+      fullPath: '/sessions'
+      preLoaderRoute: typeof moduleSessionSessionDotrouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof moduleAuthAuthDotrouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/company': {
-      id: '/company'
-      path: '/company'
-      fullPath: '/company'
-      preLoaderRoute: typeof moduleCompanyCompanyDotrouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -94,11 +94,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof moduleHomeHomeDotrouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/company/$companyId': {
-      id: '/company/$companyId'
-      path: '/company/$companyId'
-      fullPath: '/company/$companyId'
-      preLoaderRoute: typeof moduleCompanyCompanyDetailDotrouteRouteImport
+    '/sessions/$sessionId': {
+      id: '/sessions/$sessionId'
+      path: '/sessions/$sessionId'
+      fullPath: '/sessions/$sessionId'
+      preLoaderRoute: typeof moduleSessionSessionDetailDotrouteRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -106,10 +106,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   moduleHomeHomeDotrouteRoute: moduleHomeHomeDotrouteRoute,
-  moduleCompanyCompanyDotrouteRoute: moduleCompanyCompanyDotrouteRoute,
   moduleAuthAuthDotrouteRoute: moduleAuthAuthDotrouteRoute,
-  moduleCompanyCompanyDetailDotrouteRoute:
-    moduleCompanyCompanyDetailDotrouteRoute,
+  moduleSessionSessionDotrouteRoute: moduleSessionSessionDotrouteRoute,
+  moduleSessionSessionDetailDotrouteRoute:
+    moduleSessionSessionDetailDotrouteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

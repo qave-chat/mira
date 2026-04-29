@@ -11,7 +11,8 @@
     "dev": "bun --watch src/main.ts",
     "test": "bun --bun x vitest run",
     "test:watch": "bun --bun x vitest",
-    "typecheck": "tsgo --noEmit"
+    "typecheck": "tsgo --noEmit",
+    "db": "drizzle-kit"
   },
   "dependencies": {
     "@effect/platform-bun": "4.0.0-beta.50",
@@ -27,6 +28,7 @@
     "@effect/vitest": "4.0.0-beta.50",
     "@types/bun": "^1.2.0",
     "@types/node": "^25.6.0",
+    "drizzle-kit": "0.31.10",
     "vitest": "^4.1.4"
   }
 }
