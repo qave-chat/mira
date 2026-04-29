@@ -21,8 +21,8 @@ COPY apps/client-ui/package.json ./apps/client-ui/
 COPY apps/server-core/package.json ./apps/server-core/
 COPY packages/client-api/package.json ./packages/client-api/
 RUN pnpm install --offline --frozen-lockfile \
-    --filter @capital/client-ui... \
-    --filter @capital/server-core...
+    --filter @mira/client-ui... \
+    --filter @mira/server-core...
 
 # ─── build-client: produce static Vite assets ────────────────────────────────
 FROM deps AS build-client
@@ -30,11 +30,11 @@ COPY tsconfig.base.json ./
 COPY packages/client-api ./packages/client-api
 COPY apps/client-ui ./apps/client-ui
 COPY apps/server-core ./apps/server-core
-RUN pnpm --filter @capital/client-ui build
+RUN pnpm --filter @mira/client-ui build
 
 # ─── deploy: produce a lean prod-only bundle for server-core ─────────────────
 FROM build-client AS deploy
-RUN pnpm --filter @capital/server-core deploy --legacy --prod /deploy
+RUN pnpm --filter @mira/server-core deploy --legacy --prod /deploy
 RUN mkdir -p /deploy/src/client && cp -R apps/client-ui/dist/. /deploy/src/client/
 RUN mkdir -p /deploy/drizzle && \
     if [ -d apps/server-core/drizzle ]; then cp -R apps/server-core/drizzle/. /deploy/drizzle/; fi
